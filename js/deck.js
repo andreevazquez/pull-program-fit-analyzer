@@ -1,10 +1,11 @@
 // Builds a PowerPoint deck from the Story view: one slide per card, charts rendered as images
 // in light theme at 2x, plus title, summary and a policy appendix. PptxGenJS loads on first use.
-import { storyCards } from "./story.js?v=7";
+import { storyCards } from "./story.js?v=10";
 
 const PPTX_SRC = "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
 const FONT = "Arial";
-const C = { ink: "0B0B0B", ink2: "52514E", muted: "898781", grid: "E1E0D9", surface: "FCFCFB", good: "006300", vmi: "2A78D6" };
+const ACCENT = "4B3FC2";
+const C = { ink: "0B0B0B", ink2: "52514E", muted: "6B6A65", grid: "E1E0D9", surface: "FCFCFB", good: "006300", vmi: "2A78D6" };
 
 let loading = null;
 function loadPptx() {
@@ -65,7 +66,7 @@ export async function exportDeck({ storyEl, rerender, kpis, policyRows, meta }) 
     background: { color: "FFFFFF" },
     objects: [
       { line: { x: M, y: 7.0, w: W - 2 * M, h: 0, line: { color: C.grid, width: 0.75 } } },
-      { text: { text: meta.footer, options: { x: M, y: 7.05, w: 9, h: 0.3, fontFace: FONT, fontSize: 9, color: C.muted } } },
+      { text: { text: `${meta.footer}  ·  Ricardo Vázquez · linkedin.com/in/ricardovazquez88`, options: { x: M, y: 7.05, w: 11, h: 0.3, fontFace: FONT, fontSize: 9, color: C.muted } } },
     ],
     slideNumber: { x: W - M - 0.6, y: 7.05, w: 0.6, h: 0.3, fontFace: FONT, fontSize: 9, color: C.muted, align: "right" },
   });
@@ -76,6 +77,12 @@ export async function exportDeck({ storyEl, rerender, kpis, policyRows, meta }) 
   t.addText("Which parts belong in VMI, CRP, Kanban or MRP, what it does to inventory, and how to roll it out", { x: M, y: 3.1, w: W - 2 * M, h: 0.6, fontFace: FONT, fontSize: 16, color: C.ink2 });
   t.addText(meta.subtitle, { x: M, y: 4.1, w: W - 2 * M, h: 0.4, fontFace: FONT, fontSize: 12, color: C.muted });
   t.addText(meta.policyNote, { x: M, y: 4.45, w: W - 2 * M, h: 0.4, fontFace: FONT, fontSize: 12, color: C.muted });
+  t.addShape(pptx.ShapeType.line, { x: M, y: 5.5, w: 4, h: 0, line: { color: C.grid, width: 0.75 } });
+  t.addText([
+    { text: "Ricardo Vázquez", options: { bold: true, color: C.ink, breakLine: true } },
+    { text: "Supply chain, from the plant floor to the system rollout", options: { color: C.ink2, breakLine: true } },
+    { text: "linkedin.com/in/ricardovazquez88", options: { color: ACCENT, hyperlink: { url: "https://www.linkedin.com/in/ricardovazquez88" } } },
+  ], { x: M, y: 5.6, w: 6, h: 0.9, fontFace: FONT, fontSize: 12, valign: "top" });
 
   // Summary
   const s = pptx.addSlide({ masterName: "STORY" });

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- The ABC x XYZ matrix, each cell colored by its recommended program -->
+  <rect width="64" height="64" rx="12" fill="#1a1a19"/>
+  <rect x="10" y="10" width="13" height="13" rx="2.5" fill="#3987e5"/>
+  <rect x="25.5" y="10" width="13" height="13" rx="2.5" fill="#7a7973"/>
+  <rect x="41" y="10" width="13" height="13" rx="2.5" fill="#7a7973"/>
+  <rect x="10" y="25.5" width="13" height="13" rx="2.5" fill="#1baf7a"/>
+  <rect x="25.5" y="25.5" width="13" height="13" rx="2.5" fill="#eb6834"/>
+  <rect x="41" y="25.5" width="13" height="13" rx="2.5" fill="#7a7973"/>
+  <rect x="10" y="41" width="13" height="13" rx="2.5" fill="#1baf7a"/>
+  <rect x="25.5" y="41" width="13" height="13" rx="2.5" fill="#7a7973"/>
+  <rect x="41" y="41" width="13" height="13" rx="2.5" fill="#7a7973"/>
+</svg>

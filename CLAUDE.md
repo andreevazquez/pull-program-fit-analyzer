@@ -11,7 +11,7 @@ The point to make in 10 seconds: **pull programs are a portfolio decision, and t
 - Static site, deployed to GitHub Pages. No backend, no build step required (plain HTML + JS modules are fine; Vite only if it clearly helps).
 - Libraries from CDN, pinned versions: Papa Parse (CSV), Chart.js (charts). Nothing else unless necessary.
 - `sample_parts.csv` loads automatically on open. The user can also upload their own CSV in the same format.
-- All computation in the browser. No data leaves the page.
+- All computation in the browser. No data leaves the page. The only external call besides the CDNs is Cloudflare Web Analytics (anonymous page views, no cookies, never sees uploaded data).
 - UI in English. Light and dark mode via `prefers-color-scheme`. Responsive down to phone width.
 - Footer: "Synthetic data. Part numbers, manufacturers and suppliers are fictional." plus author credit and LinkedIn link (https://www.linkedin.com/in/ricardovazquez88).
 

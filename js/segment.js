@@ -2,7 +2,7 @@
 // Port of reference/segment.py. If this file and the Python disagree, the Python wins.
 // Pure functions, no DOM and no dependencies, so the same module runs in the browser and in Node tests.
 
-import { INSIGHT_DEFAULTS } from "./insights.js?v=7";
+import { INSIGHT_DEFAULTS } from "./insights.js?v=10";
 
 export const PROGRAMS = ["VMI", "CRP", "Kanban", "MRP"];
 

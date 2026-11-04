@@ -1,8 +1,8 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=7";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=7";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=7";
-import { exportDeck, canvasPng } from "./deck.js?v=7";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=7";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=10";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=10";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=10";
+import { exportDeck, canvasPng } from "./deck.js?v=10";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=10";
 
 /* ---------------- state ---------------- */
 const state = {
