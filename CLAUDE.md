@@ -84,7 +84,10 @@ Added on top of v1. They never change the `segment.py` outputs; `test/check.mjs`
   - **E&O exposure** = max(0, on hand − last-`trend_weeks` run-rate × `eo_horizon_weeks`) × cost, only for Declining parts or parts above `eo_dos_days` days on hand.
   - **Rollout waves**: Wave 1 = everything that needs no supplier agreement (Kanban, back to MRP, right-size in place). VMI/CRP program changes go by supplier, ranked by VMI/CRP spend: suppliers whose cumulative share before them is < `wave2_share` go to Wave 2, the rest to Wave 3. `wave_months` sets the timeline labels.
   - **Scenarios**: save the current policy with its metrics (in memory, this session only), compare side by side, and apply one back. Shown in Analysis → Scenarios, in the Story view and in the deck.
-- **Cache busting**: every module import and the CSS/JS links in `index.html` carry `?v=N`. Bump N everywhere on each deploy, or browsers mix old and new files for ~10 minutes.
+- **Cache busting**: every module import and the CSS/JS links in `index.html` carry `?v=N`. Before each deploy run `node scripts/release.mjs`: it runs every test and bumps N everywhere, so browsers never mix old and new files.
+- **Tests**: `test/check.mjs` (reference match), `test/insights.mjs` (director-view invariants), `test/robustness.mjs` (formatted numbers, program spelling, duplicates). GitHub Actions runs all three on every push (`.github/workflows/test.yml`).
+- **Input tolerance**: numbers may include `$`, thousands separators or spaces. `current_program` is matched case-insensitively (`VMI/SMI` maps to VMI). Duplicate part numbers are flagged as a warning. Headers are matched case-insensitively.
+- **UI conventions**: `js/format.js` holds the only number formatters. The view toggle uses `--accent` (indigo, deliberately not a program color). Text colors meet WCAG AA 4.5:1 in both themes. Clickable rows and sortable headers are keyboard-operable.
 
 ## Out of scope for v1
 Supplier capacity, multi-site, forecast vs actual comparison, freshness/date-code rules (possible v2 tab), login, persistence beyond the session.

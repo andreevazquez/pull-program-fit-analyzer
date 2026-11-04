@@ -1,7 +1,8 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=5";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=5";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=5";
-import { exportDeck, canvasPng } from "./deck.js?v=5";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=7";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=7";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=7";
+import { exportDeck, canvasPng } from "./deck.js?v=7";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=7";
 
 /* ---------------- state ---------------- */
 const state = {
@@ -21,36 +22,21 @@ function emptyFilters() {
 }
 
 const $ = (s, el = document) => el.querySelector(s);
-const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const PVAR = { VMI: "--vmi", CRP: "--crp", Kanban: "--kanban", MRP: "--mrp" };
 const pc = (prog) => `--c: var(${PVAR[prog] || "--mrp"})`;
 const badge = (prog) => prog ? `<span class="badge" style="${pc(prog)}">${esc(prog)}</span>` : `<span class="muted">—</span>`;
 
-/* ---------------- formatting ---------------- */
-const nf = (d) => new Intl.NumberFormat("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
-const fmtN = (v, d = 0) => (Number.isFinite(v) ? nf(d).format(v) : "—");
-const fmtUSD = (v, d = 0) => (Number.isFinite(v) ? (v < 0 ? "−$" : "$") + nf(d).format(Math.abs(v)) : "—");
-function fmtM(v) {
-  if (!Number.isFinite(v)) return "—";
-  const a = Math.abs(v);
-  if (a >= 1e6) return "$" + (v / 1e6).toFixed(2) + "M";
-  if (a >= 1e4) return "$" + Math.round(v / 1e3) + "k";
-  if (a >= 1e3) return "$" + (v / 1e3).toFixed(1) + "k";
-  return "$" + Math.round(v);
-}
-const fmtPct = (v, d = 0) => (Number.isFinite(v) ? (v * 100).toFixed(d) + "%" : "—");
-const fmtCost = (v) => (Number.isFinite(v) ? "$" + (v < 1 ? v.toFixed(4) : v.toFixed(2)) : "—");
 
 /* ---------------- data loading ---------------- */
 const REQUIRED = ["part_number", "unit_cost_usd", "lead_time_weeks", "moq", "current_program", "on_hand_qty"];
 
 function loadText(text, label) {
-  const parsed = Papa.parse(text, { header: true, skipEmptyLines: "greedy", transformHeader: (h) => h.trim() });
+  const parsed = Papa.parse(text, { header: true, skipEmptyLines: "greedy", transformHeader: (h) => h.trim().toLowerCase() });
   const fields = parsed.meta.fields || [];
   const missing = REQUIRED.filter((c) => !fields.includes(c));
   const weeks = fields.filter((c) => /^w\d+$/.test(c));
   if (missing.length || !weeks.length) {
-    showNotice(`Couldn't read <b>${esc(label)}</b>: missing column${missing.length === 1 ? "" : "s"} ${esc([...missing, ...(weeks.length ? [] : ["w01…w26"])].join(", "))}. Use the same format as sample_parts.csv.`);
+    showNotice(`Couldn't read <b>${esc(label)}</b>: missing column${missing.length === 1 ? "" : "s"} ${esc([...missing, ...(weeks.length ? [] : ["w01…w26"])].join(", "))}. <a href="#" data-guide>See the CSV format and download a template</a>.`);
     return;
   }
   showNotice("");
@@ -62,13 +48,16 @@ function loadText(text, label) {
   closeDrawer();
   buildFilterOptions();
   syncFilterInputs();
+  state.justLoaded = /\(sample\)$/.test(label) ? null : label;
   recompute();
 }
 
-function showNotice(html) {
+function showNotice(html, kind = "error") {
   const n = $("#notice");
   n.innerHTML = html;
   n.hidden = !html;
+  n.classList.toggle("ok", kind === "ok");
+  n.setAttribute("role", kind === "ok" ? "status" : "alert");
 }
 
 async function loadSample() {
@@ -97,6 +86,11 @@ function recompute() {
 }
 
 function renderAll() {
+  if (state.justLoaded) {
+    const S = state.result.summary;
+    showNotice(`Loaded <b>${esc(state.justLoaded)}</b>: ${S.parts} parts, ${S.analyzed} analyzed${S.blocked ? `, ${S.blocked} blocked by data (see Data integrity)` : ""}. The file stays in this browser.`, "ok");
+    state.justLoaded = null;
+  }
   renderKPIs();
   renderMatrix();
   renderMigration();
@@ -113,7 +107,7 @@ function renderAll() {
 
 function setView(view) {
   state.view = view;
-  for (const b of document.querySelectorAll("[data-view]")) b.setAttribute("aria-selected", String(b.dataset.view === view));
+  for (const b of document.querySelectorAll("[data-view]")) b.setAttribute("aria-pressed", String(b.dataset.view === view));
   $("#story").hidden = view !== "story";
   for (const el of document.querySelectorAll("[data-analysis]")) el.hidden = view === "story";
   history.replaceState(null, "", view === "story" ? "#story" : location.pathname + location.search);
@@ -268,20 +262,20 @@ function renderTable() {
   const thead = $("#partsTable thead"), tbody = $("#partsTable tbody");
   thead.innerHTML = `<tr>${COLS.map((c) => {
     const sorted = state.sort.key === c.key;
-    return `<th class="sortable ${c.n ? "n" : ""} ${sorted ? "sorted" : ""}" data-sort="${c.key}" data-dir="${state.sort.dir > 0 ? "↑" : "↓"}"
+    return `<th tabindex="0" class="sortable ${c.n ? "n" : ""} ${sorted ? "sorted" : ""}" data-sort="${c.key}" data-dir="${state.sort.dir > 0 ? "↑" : "↓"}"
       aria-sort="${sorted ? (state.sort.dir > 0 ? "ascending" : "descending") : "none"}">${c.label}</th>`;
   }).join("")}</tr>`;
   const list = sortParts(filteredParts());
   tbody.innerHTML = list.map((p) => {
     if (p.blocking) {
-      return `<tr class="clickable" data-part="${esc(p.part_number)}">
+      return `<tr class="clickable" tabindex="0" data-part="${esc(p.part_number)}">
         <td class="pn">${esc(p.part_number)}</td><td>${esc(p.commodity)}</td><td>${esc(p.supplier)}</td>
         <td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
         <td>${badge(p.current_program)}</td><td><span class="badge blocked">Blocked</span></td>
         <td class="reason">${esc(p.data_issues)}</td><td class="n muted">—</td><td class="n muted">—</td><td class="n muted">—</td><td class="n muted">—</td></tr>`;
     }
     const warn = p.issues.length ? ` <span class="tag" title="${esc(p.data_issues)}">!</span>` : "";
-    return `<tr class="clickable" data-part="${esc(p.part_number)}">
+    return `<tr class="clickable" tabindex="0" data-part="${esc(p.part_number)}">
       <td class="pn">${esc(p.part_number)}${warn}</td><td>${esc(p.commodity)}</td><td>${esc(p.supplier)}</td>
       <td>${p.abc}${p.super_a ? '<span class="tag" title="Super A">SA</span>' : ""}</td><td>${p.xyz}</td>
       <td class="${p.trend === "Flat" ? "muted" : ""}">${p.trend}</td>
@@ -348,7 +342,7 @@ function renderSuppliers() {
     rows.map((g, i) => {
       const vc = g.vmiS + g.crpS;
       const mix = PROGRAMS.filter((p) => g.mix[p]).map((p) => `<span style="${pc(p)}; flex:${g.mix[p]}" title="${p} ${fmtM(g.mix[p])}"></span>`).join("");
-      return `<tr class="clickable" data-supplier="${esc(g.supplier)}">
+      return `<tr class="clickable" tabindex="0" data-supplier="${esc(g.supplier)}">
         <td class="muted">${i + 1}</td><td class="pn">${esc(g.supplier)}</td>
         <td class="n">${g.vmiN || '<span class="muted">0</span>'}</td><td class="n">${g.vmiS ? fmtM(g.vmiS) : '<span class="muted">—</span>'}</td>
         <td class="n">${g.crpN || '<span class="muted">0</span>'}</td><td class="n">${g.crpS ? fmtM(g.crpS) : '<span class="muted">—</span>'}</td>
@@ -366,26 +360,30 @@ function issueDetail(p, msg) {
   if (msg.startsWith("Missing lead time")) return "lead_time_weeks is blank";
   if (msg.startsWith("Zero/blank cost")) return `unit_cost_usd = ${Number.isFinite(p.unit_cost_usd) ? p.unit_cost_usd : "blank"}`;
   if (msg.startsWith("No demand")) return "Every week w01–w26 is 0";
+  if (msg.startsWith("Duplicate")) return `${esc(p.part_number)} appears more than once in the file`;
   if (msg.startsWith("MOQ")) return `MOQ ${fmtN(p.moq)} = ${fmtN(p.moq / p.avg_weekly, 1)} wks of avg demand (${fmtN(p.avg_weekly)}/wk)`;
   return "";
 }
+const BLOCKING_ISSUES = ["Missing lead time", "Zero/blank cost", "No demand"];
 function renderIntegrity() {
   const list = state.result.parts.filter((p) => p.issues.length);
   $("#issueCount").textContent = list.length;
   $("#integrityTable").innerHTML = `<thead><tr><th>Part</th><th>Description</th><th>Supplier</th><th>Severity</th><th>Issue</th><th>Detail</th><th>Effect</th></tr></thead><tbody>` +
     (list.map((p) => p.issues.map((msg, i) => {
-      const blocking = !msg.startsWith("MOQ");
-      return `<tr class="clickable" data-part="${esc(p.part_number)}">
+      const blocking = BLOCKING_ISSUES.some((k) => msg.startsWith(k));
+      return `<tr class="clickable" tabindex="0" data-part="${esc(p.part_number)}">
         <td class="pn">${i ? "" : esc(p.part_number)}</td><td>${i ? "" : esc(p.description)}</td><td>${i ? "" : esc(p.supplier)}</td>
         <td class="${blocking ? "issue-block" : "issue-warn"}">${blocking ? "Blocking" : "Warning"}</td>
         <td>${esc(msg)}</td><td class="muted">${esc(issueDetail(p, msg))}</td>
-        <td class="muted">${blocking ? "Excluded from segmentation" : "Analyzed; MOQ drives cycle stock"}</td></tr>`;
+        <td class="muted">${blocking ? "Excluded from segmentation" : msg.startsWith("MOQ") ? "Analyzed; MOQ drives cycle stock" : "Analyzed; fix so each part appears once"}</td></tr>`;
     }).join("")).join("") || `<tr><td colspan="7" class="muted">No data issues found.</td></tr>`) + "</tbody>";
 }
 
 /* ---------------- drawer ---------------- */
 let chart = null;
+let drawerReturnFocus = null;
 function openDrawer(pn) {
+  if ($("#drawer").hidden) drawerReturnFocus = document.activeElement;
   state.openPart = pn;
   $("#drawer").hidden = false;
   $("#scrim").hidden = false;
@@ -397,6 +395,8 @@ function closeDrawer() {
   $("#drawer").hidden = true;
   $("#scrim").hidden = true;
   if (chart) { chart.destroy(); chart = null; }
+  if (drawerReturnFocus?.isConnected) drawerReturnFocus.focus();
+  drawerReturnFocus = null;
 }
 
 function ruleText(p, P) {
@@ -635,11 +635,27 @@ function exportCSV() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/* ---------------- template ---------------- */
+function downloadTemplate() {
+  const weeks = Array.from({ length: 26 }, (_, i) => "w" + String(i + 1).padStart(2, "0"));
+  const head = ["part_number", "description", "commodity", "manufacturer", "supplier", "unit_cost_usd", "lead_time_weeks", "moq", "current_program", "on_hand_qty", ...weeks];
+  const demand = (base, swing) => weeks.map((_, i) => Math.round(base + swing * Math.sin(i * 1.7)));
+  const rows = [
+    ["EX-0001", "Example MLCC capacitor", "MLCC Capacitor", "Example Manufacturer", "Example Distributor", 0.012, 14, 10000, "MRP", 250000, ...demand(60000, 8000)],
+    ["EX-0002", "Example microcontroller", "Microcontroller", "Example Semiconductor", "Example Franchise", 3.85, 22, 490, "VMI", 6200, ...demand(1400, 200)],
+  ];
+  const csv = [head, ...rows].map((r) => r.join(",")).join("\r\n") + "\r\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "pull_program_template.csv" });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 /* ---------------- events ---------------- */
 const TABS = ["parts", "suppliers", "waves", "risk", "scenarios", "integrity"];
 function setTab(tab) {
   state.tab = tab;
-  for (const b of document.querySelectorAll(".tab")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
+  for (const b of document.querySelectorAll(".tab")) { const on = b.dataset.tab === tab; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; }
   for (const t of TABS) $(`#tab-${t}`).hidden = t !== tab;
 }
 
@@ -651,6 +667,12 @@ function bind() {
     e.target.value = "";
   });
   $("#export").addEventListener("click", exportCSV);
+  const guide = $("#guide");
+  const openGuide = (e) => { e?.preventDefault(); guide.showModal(); };
+  $("#formatHelp").addEventListener("click", openGuide);
+  $("#notice").addEventListener("click", (e) => { if (e.target.closest("[data-guide]")) openGuide(e); });
+  guide.addEventListener("click", (e) => { if (e.target === guide || e.target.closest("[data-close]")) guide.close(); });
+  $("#dlTemplate").addEventListener("click", downloadTemplate);
   $("#policyToggle").addEventListener("click", () => togglePolicy());
   $("#policyClose").addEventListener("click", () => togglePolicy(false));
   $("#policyReset").addEventListener("click", () => { state.policy = clonePolicy(); syncPolicyInputs(); recompute(); });
@@ -760,7 +782,7 @@ function renderWaves() {
       ${w.suppliers.length ? `<div class="wave-sup">${w.suppliers.map((x) => `<span class="chip-static">${esc(x.supplier)} <span class="muted">${fmtM(x.spend)}</span></span>`).join("")}</div>` : ""}
     </div>`).join("");
   const rows = W.flatMap((w) => [...w.parts].sort((a, b) => (b.inv_value_current - b.inv_value_target) - (a.inv_value_current - a.inv_value_target)).map((p) => `
-    <tr class="clickable" data-part="${esc(p.part_number)}"><td>${w.label}</td><td class="pn">${esc(p.part_number)}</td><td>${esc(p.supplier)}</td>
+    <tr class="clickable" tabindex="0" data-part="${esc(p.part_number)}"><td>${w.label}</td><td class="pn">${esc(p.part_number)}</td><td>${esc(p.supplier)}</td>
       <td>${badge(p.current_program)}</td><td>${badge(p.recommended_program)}${p.program_change ? "" : ' <span class="tag">keep</span>'}</td>
       <td class="n">${fmtUSD(p.inv_value_current - p.inv_value_target)}</td><td class="n ${p.excess_value ? "" : "muted"}">${fmtUSD(p.excess_value)}</td></tr>`)).join("");
   $("#tab-waves").innerHTML = `<p class="hint">Wave 1 needs no supplier agreement. Waves 2 and 3 move VMI/CRP parts supplier by supplier, largest VMI/CRP spend first. Thresholds are in Policy → Director views.</p>
@@ -775,14 +797,14 @@ function renderRisk() {
     <h3>Stockout risk</h3>
     <p class="hint">${I.critical.length} parts below safety stock (build-up ${fmtM(I.criticalBuild)}) and ${I.risk.length - I.critical.length} below target. Bringing all of them to target takes ${fmtM(I.riskBuild)}.</p>
     <div class="table-wrap"><table class="grid"><thead><tr><th>Status</th><th>Part</th><th>Supplier</th><th>Recommended</th><th class="n">On hand</th><th class="n">Safety stock</th><th class="n">Target</th><th class="n">Weeks of cover</th><th class="n">Build-up $</th></tr></thead><tbody>
-    ${I.risk.map((r) => `<tr class="clickable" data-part="${esc(r.part.part_number)}"><td>${tier(r.tier)}</td><td class="pn">${esc(r.part.part_number)}</td><td>${esc(r.part.supplier)}</td>
+    ${I.risk.map((r) => `<tr class="clickable" tabindex="0" data-part="${esc(r.part.part_number)}"><td>${tier(r.tier)}</td><td class="pn">${esc(r.part.part_number)}</td><td>${esc(r.part.supplier)}</td>
       <td>${badge(r.part.recommended_program)}</td><td class="n">${fmtN(r.part.on_hand_qty)}</td><td class="n">${fmtN(r.safety)}</td><td class="n">${fmtN(r.part.target_qty)}</td>
       <td class="n">${fmtN(r.weeks_cover, 1)}</td><td class="n">${fmtUSD(r.build_value)}</td></tr>`).join("") || `<tr><td colspan="9" class="muted">No part below target.</td></tr>`}
     </tbody></table></div>
     <h3>Excess &amp; obsolescence (E&amp;O) exposure</h3>
     <p class="hint">Stock beyond ${P.eo_horizon_weeks} weeks at the recent run-rate (last ${P.trend_weeks} weeks), on declining parts or slow movers (over ${P.eo_dos_days} days on hand): ${fmtM(I.eoValue)} across ${I.eo.length} parts.</p>
     <div class="table-wrap"><table class="grid"><thead><tr><th>Part</th><th>Supplier</th><th>Why</th><th class="n">On hand</th><th class="n">Run-rate / wk</th><th class="n">Needed in ${P.eo_horizon_weeks} wks</th><th class="n">Exposed qty</th><th class="n">Exposure $</th></tr></thead><tbody>
-    ${I.eo.map((e) => `<tr class="clickable" data-part="${esc(e.part.part_number)}"><td class="pn">${esc(e.part.part_number)}</td><td>${esc(e.part.supplier)}</td><td>${esc(e.why)}</td>
+    ${I.eo.map((e) => `<tr class="clickable" tabindex="0" data-part="${esc(e.part.part_number)}"><td class="pn">${esc(e.part.part_number)}</td><td>${esc(e.part.supplier)}</td><td>${esc(e.why)}</td>
       <td class="n">${fmtN(e.part.on_hand_qty)}</td><td class="n">${fmtN(e.runRate)}</td><td class="n">${fmtN(e.covered)}</td><td class="n">${fmtN(e.excess_qty)}</td><td class="n">${fmtUSD(e.value)}</td></tr>`).join("") || `<tr><td colspan="8" class="muted">No exposure at the current thresholds.</td></tr>`}
     </tbody></table></div>`;
 }
@@ -864,6 +886,24 @@ function downloadPng(id) {
   document.body.appendChild(a); a.click(); a.remove();
 }
 
+function bindKeyboard() {
+  // Enter/Space activate clickable rows and sortable headers, like buttons.
+  document.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches?.("tr.clickable, th.sortable")) { e.preventDefault(); e.target.click(); }
+  });
+  // Arrow keys move between tabs (WAI-ARIA tabs pattern).
+  document.querySelector(".tabs").addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const tabs = [...document.querySelectorAll(".tab")];
+    const i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+    next.focus(); setTab(next.dataset.tab);
+  });
+  // Scenarios live in memory only: warn before they are lost.
+  window.addEventListener("beforeunload", (e) => { if (state.scenarios.length) { e.preventDefault(); e.returnValue = ""; } });
+}
+
 function bindDirector() {
   $("#story").addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]");
@@ -889,6 +929,7 @@ function bindDirector() {
 
 bind();
 bindDirector();
+bindKeyboard();
 setView(state.view);
 buildPolicyForm();
 loadSample();

@@ -1,20 +1,13 @@
 // Story view: charts only, one takeaway per chart, for steering meetings.
 // Every headline is computed from the current result, so it follows the Policy panel.
-import { PROGRAMS } from "./segment.js?v=5";
-import { SCENARIO_ROWS } from "./insights.js?v=5";
+import { PROGRAMS } from "./segment.js?v=7";
+import { SCENARIO_ROWS } from "./insights.js?v=7";
+import { esc, fmtM, fmtPct, plain } from "./format.js?v=7";
 
 const charts = new Map();
 
 const nf0 = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-export function fmtM(v) {
-  if (!Number.isFinite(v)) return "—";
-  const a = Math.abs(v), sign = v < 0 ? "−" : "";
-  if (a >= 1e6) return `${sign}$${(a / 1e6).toFixed(2)}M`;
-  if (a >= 1e3) return `${sign}$${nf0.format(a / 1e3)}k`;
-  return `${sign}$${nf0.format(a)}`;
-}
-export const pct = (v, d = 0) => (Number.isFinite(v) ? `${(v * 100).toFixed(d)}%` : "—");
-const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = fmtPct;
 const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
 const median = (a) => {
   if (!a.length) return NaN;
@@ -146,7 +139,7 @@ export function renderStory(container, result, P, ins, ctx = {}) {
         ${id ? `<button type="button" class="btn btn-ghost png" data-png="${id}" title="Download this chart as PNG">PNG</button>` : ""}</div>
       <h2 class="headline">${headline}</h2>
       <p class="hint">${sub}</p>
-      ${id ? `<div class="story-chart"><canvas id="${id}" role="img" aria-label="${esc(eyebrow)}"></canvas></div>` : body}
+      ${id ? `<div class="story-chart"><canvas id="${id}" role="img" aria-label="${esc(plain(headline))}"></canvas></div>` : body}
     </article>`;
 
   const consignSub = P.consignment

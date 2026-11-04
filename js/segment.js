@@ -2,7 +2,7 @@
 // Port of reference/segment.py. If this file and the Python disagree, the Python wins.
 // Pure functions, no DOM and no dependencies, so the same module runs in the browser and in Node tests.
 
-import { INSIGHT_DEFAULTS } from "./insights.js?v=5";
+import { INSIGHT_DEFAULTS } from "./insights.js?v=7";
 
 export const PROGRAMS = ["VMI", "CRP", "Kanban", "MRP"];
 
@@ -39,9 +39,14 @@ export function npRound(x, d = 0) {
 const num = (v) => {
   if (v === null || v === undefined) return NaN;
   if (typeof v === "number") return v;
-  const s = String(v).trim();
+  // Tolerate spreadsheet formatting: thousands separators, currency signs, spaces.
+  const s = String(v).trim().replace(/[\s,$]/g, "");
   return s === "" ? NaN : Number(s);
 };
+
+// Map "kanban", "VMI/SMI", " mrp " etc. to the canonical program names; unknown values pass through.
+const PROGRAM_ALIASES = { vmi: "VMI", smi: "VMI", "vmi/smi": "VMI", crp: "CRP", kanban: "Kanban", mrp: "MRP" };
+const normProgram = (v) => { const s = String(v ?? "").trim(); return PROGRAM_ALIASES[s.toLowerCase()] ?? s; };
 
 const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
 
@@ -70,7 +75,7 @@ export function analyze(rows, policy = DEFAULT_POLICY) {
       description: r.description ?? "", commodity: r.commodity ?? "",
       manufacturer: r.manufacturer ?? "", supplier: r.supplier ?? "",
       unit_cost_usd: cost, lead_time_weeks: lt, moq, on_hand_qty: onHand,
-      current_program: String(r.current_program ?? "").trim(),
+      current_program: normProgram(r.current_program),
       demand, avg_weekly: avg, sd_weekly: sd,
       cv: avg > 0 ? sd / avg : NaN,
       zero_share: demand.filter((x) => x === 0).length / demand.length,
@@ -82,9 +87,15 @@ export function analyze(rows, policy = DEFAULT_POLICY) {
     if (avg === 0) p.issues.push("No demand in 26 wks");
     p.blocking = p.issues.length > 0;
     if (avg > 0 && moq > P.moq_weeks_flag * avg) p.issues.push(`MOQ > ${P.moq_weeks_flag} wks of demand`);
-    p.data_issues = p.issues.join("; ");
     return p;
   });
+  // Duplicate part numbers would collide in the drawer, filters and export: warn (not in segment.py).
+  const seen = new Map();
+  for (const p of parts) seen.set(p.part_number, (seen.get(p.part_number) || 0) + 1);
+  for (const p of parts) {
+    if (seen.get(p.part_number) > 1) p.issues.push("Duplicate part number");
+    p.data_issues = p.issues.join("; ");
+  }
 
   const s = parts.filter((p) => !p.blocking);
   s.forEach((p) => { p.annual_spend = p.avg_weekly * 52 * p.unit_cost_usd; });

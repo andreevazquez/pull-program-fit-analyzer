@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pull Program Fit Analyzer</title>
   <meta name="description" content="Recommends VMI, CRP, Kanban or MRP for each purchased component, with target days of supply and the inventory the change frees up. Policy is explicit and adjustable.">
-  <link rel="stylesheet" href="css/styles.css?v=5">
+  <link rel="stylesheet" href="css/styles.css?v=7">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script type="module" src="js/app.js?v=5"></script>
+  <script type="module" src="js/app.js?v=7"></script>
 </head>
 <body>
   <header class="topbar">
@@ -17,15 +17,16 @@
       <p class="tagline">Pull programs are a portfolio decision. The policy is explicit and adjustable.</p>
     </div>
     <div class="actions">
-      <div class="seg" role="tablist" aria-label="View">
-        <button type="button" role="tab" data-view="analysis" aria-selected="true">Analysis</button>
-        <button type="button" role="tab" data-view="story" aria-selected="false">Story</button>
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" data-view="analysis" aria-pressed="true">Analysis</button>
+        <button type="button" data-view="story" aria-pressed="false">Story</button>
       </div>
       <span class="source" id="source">Loading sample…</span>
       <label class="btn">
         <input type="file" id="upload" accept=".csv,text/csv" hidden>
         Upload CSV
       </label>
+      <button class="btn btn-ghost" id="formatHelp" type="button" aria-haspopup="dialog">CSV format</button>
       <button class="btn" id="export" type="button">Export CSV</button>
       <button class="btn btn-primary" id="policyToggle" type="button" aria-expanded="false" aria-controls="policy">
         Policy <span class="pill" id="policyDiff" hidden></span>
@@ -61,15 +62,15 @@
 
       <section class="card" data-analysis>
         <div class="tabs" role="tablist">
-          <button role="tab" class="tab" data-tab="parts" aria-selected="true">Parts</button>
-          <button role="tab" class="tab" data-tab="suppliers" aria-selected="false">Supplier view</button>
-          <button role="tab" class="tab" data-tab="waves" aria-selected="false">Rollout waves</button>
-          <button role="tab" class="tab" data-tab="risk" aria-selected="false">Risk</button>
-          <button role="tab" class="tab" data-tab="scenarios" aria-selected="false">Scenarios</button>
-          <button role="tab" class="tab" data-tab="integrity" aria-selected="false">Data integrity <span class="pill" id="issueCount"></span></button>
+          <button role="tab" class="tab" id="tabbtn-parts" data-tab="parts" aria-controls="tab-parts" aria-selected="true" tabindex="0">Parts</button>
+          <button role="tab" class="tab" id="tabbtn-suppliers" data-tab="suppliers" aria-controls="tab-suppliers" aria-selected="false" tabindex="-1">Supplier view</button>
+          <button role="tab" class="tab" id="tabbtn-waves" data-tab="waves" aria-controls="tab-waves" aria-selected="false" tabindex="-1">Rollout waves</button>
+          <button role="tab" class="tab" id="tabbtn-risk" data-tab="risk" aria-controls="tab-risk" aria-selected="false" tabindex="-1">Risk</button>
+          <button role="tab" class="tab" id="tabbtn-scenarios" data-tab="scenarios" aria-controls="tab-scenarios" aria-selected="false" tabindex="-1">Scenarios</button>
+          <button role="tab" class="tab" id="tabbtn-integrity" data-tab="integrity" aria-controls="tab-integrity" aria-selected="false" tabindex="-1">Data integrity <span class="pill" id="issueCount"></span></button>
         </div>
 
-        <div class="tabpanel" id="tab-parts">
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-parts" id="tab-parts">
           <div class="filters" id="filters">
             <input type="search" id="fSearch" placeholder="Search part, description, manufacturer" aria-label="Search">
             <select id="fCommodity" aria-label="Commodity"></select>
@@ -92,16 +93,16 @@
           <p class="tablefoot" id="partsFoot"></p>
         </div>
 
-        <div class="tabpanel" id="tab-suppliers" hidden>
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-suppliers" id="tab-suppliers" hidden>
           <p class="hint">The negotiation list: suppliers ranked by annual spend recommended for VMI or CRP. Start at the top.</p>
           <div class="table-wrap"><table class="grid" id="supplierTable"></table></div>
         </div>
 
-        <div class="tabpanel" id="tab-waves" hidden></div>
-        <div class="tabpanel" id="tab-risk" hidden></div>
-        <div class="tabpanel" id="tab-scenarios" hidden></div>
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-waves" id="tab-waves" hidden></div>
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-risk" id="tab-risk" hidden></div>
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-scenarios" id="tab-scenarios" hidden></div>
 
-        <div class="tabpanel" id="tab-integrity" hidden>
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-integrity" id="tab-integrity" hidden>
           <p class="hint">Blocking issues keep a part out of segmentation until the master data is fixed. Warnings are analyzed but should be reviewed.</p>
           <div class="table-wrap"><table class="grid" id="integrityTable"></table></div>
         </div>
@@ -122,7 +123,7 @@
   </div>
 
   <div class="scrim" id="scrim" hidden></div>
-  <aside class="drawer" id="drawer" aria-label="Part detail" hidden>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" hidden>
     <div class="drawer-head">
       <div>
         <h2 id="dTitle"></h2>
@@ -132,6 +133,39 @@
     </div>
     <div class="drawer-body" id="dBody"></div>
   </aside>
+
+  <dialog class="guide" id="guide" aria-labelledby="guideTitle">
+    <div class="guide-head">
+      <h2 id="guideTitle">Analyze your own parts</h2>
+      <button class="btn btn-ghost icon" type="button" data-close aria-label="Close">×</button>
+    </div>
+    <div class="guide-body">
+      <ol class="guide-steps">
+        <li><b>Download a template.</b> Start from the blank one, or from the 150-part sample to see real-looking data.</li>
+        <li><b>Fill one row per purchased part</b> with 26 weeks of demand, oldest week first.</li>
+        <li><b>Save as CSV</b> (in Excel: <i>CSV UTF-8, comma delimited</i>) and click <b>Upload CSV</b>.</li>
+      </ol>
+      <div class="guide-actions">
+        <button class="btn btn-primary" type="button" id="dlTemplate">Download blank template</button>
+        <a class="btn" href="sample_parts.csv" download="sample_parts.csv">Download 150-part sample</a>
+      </div>
+      <h3>Required columns</h3>
+      <table class="grid guide-table"><tbody>
+        <tr><td><code>part_number</code></td><td>Unique part ID</td></tr>
+        <tr><td><code>unit_cost_usd</code></td><td>Unit cost in USD, greater than 0</td></tr>
+        <tr><td><code>lead_time_weeks</code></td><td>Supplier lead time in weeks</td></tr>
+        <tr><td><code>moq</code></td><td>Minimum order quantity, in units</td></tr>
+        <tr><td><code>current_program</code></td><td>Exactly one of <code>VMI</code>, <code>CRP</code>, <code>Kanban</code>, <code>MRP</code></td></tr>
+        <tr><td><code>on_hand_qty</code></td><td>Inventory on hand today, in units</td></tr>
+        <tr><td><code>w01</code> … <code>w26</code></td><td>Weekly demand in units, <code>w01</code> = oldest, <code>w26</code> = most recent. Use 0 for no demand.</td></tr>
+      </tbody></table>
+      <h3>Recommended columns</h3>
+      <p class="hint"><code>description</code>, <code>commodity</code>, <code>manufacturer</code>, <code>supplier</code>. They drive the filters, the supplier view, the negotiation list and the rollout waves.</p>
+      <h3>What happens with bad rows</h3>
+      <p class="hint">Parts with a missing lead time, zero cost or no demand in 26 weeks are not dropped silently: they are listed in <b>Data integrity</b> and kept out of the analysis until fixed. An MOQ above 8 weeks of demand is flagged as a warning but still analyzed.</p>
+      <p class="guide-privacy">Your file never leaves this page. Everything is computed in your browser, nothing is uploaded, and reloading the page goes back to the sample data.</p>
+    </div>
+  </dialog>
 
   <footer class="footer">
     <span>Synthetic data. Part numbers, manufacturers and suppliers are fictional.</span>
