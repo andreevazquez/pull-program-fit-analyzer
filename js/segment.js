@@ -2,7 +2,8 @@
 // Port of reference/segment.py. If this file and the Python disagree, the Python wins.
 // Pure functions, no DOM and no dependencies, so the same module runs in the browser and in Node tests.
 
-import { INSIGHT_DEFAULTS } from "./insights.js?v=10";
+import { INSIGHT_DEFAULTS } from "./insights.js?v=11";
+import { SALES_DEFAULTS } from "./sales.js?v=11";
 
 export const PROGRAMS = ["VMI", "CRP", "Kanban", "MRP"];
 
@@ -19,6 +20,7 @@ export const DEFAULT_POLICY = Object.freeze({
   moq_weeks_flag: 8, consignment: true, lineside_days: 2,
   // Extensions for the director views (js/insights.js). Not in segment.py; they never change its outputs.
   ...INSIGHT_DEFAULTS,
+  ...SALES_DEFAULTS,
 });
 
 export const clonePolicy = (p = DEFAULT_POLICY) => JSON.parse(JSON.stringify(p));

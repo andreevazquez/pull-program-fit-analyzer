@@ -272,6 +272,10 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
 .hero .value .arrow { color: var(--muted); font-weight: 400; padding: 0 4px; }
 .hero .sub { font-size: 12px; color: var(--muted); }
 .hero.excess { box-shadow: inset 3px 0 0 var(--good); }
+.hero.dip { box-shadow: inset 3px 0 0 var(--accent); }
+.sales-map td:first-child { color: var(--ink-2); white-space: nowrap; }
+.sales-cta { margin-top: 10px; }
+.sales-cta a { color: var(--accent); font-weight: 600; }
 .hero.consign { box-shadow: inset 3px 0 0 var(--vmi); }
 .story-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .story-card { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }

@@ -1,10 +1,13 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=10";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=10";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=10";
-import { exportDeck, canvasPng } from "./deck.js?v=10";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=10";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=11";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=11";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=11";
+import { exportDeck, canvasPng } from "./deck.js?v=11";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=11";
+import { sellIn } from "./sales.js?v=11";
+import { renderSales, destroySales } from "./sales-view.js?v=11";
 
 /* ---------------- state ---------------- */
+const VIEW_HASH = { "#story": "story", "#sales": "sales" };
 const state = {
   rows: [],
   policy: clonePolicy(),
@@ -14,7 +17,7 @@ const state = {
   filters: emptyFilters(),
   sort: { key: "annual_spend", dir: -1 },
   tab: "parts",
-  view: location.hash === "#story" ? "story" : "analysis",
+  view: VIEW_HASH[location.hash] || "analysis",
   openPart: null,
 };
 function emptyFilters() {
@@ -81,6 +84,7 @@ function recompute() {
   pending = setTimeout(() => {
     state.result = analyze(state.rows, state.policy);
     state.insights = insights(state.result, state.policy);
+    state.sales = sellIn(state.result, state.policy);
     renderAll();
   });
 }
@@ -102,6 +106,7 @@ function renderAll() {
   renderScenarios();
   renderPolicyDiff();
   if (state.view === "story") drawStory();
+  if (state.view === "sales") drawSales();
   if (state.openPart) renderDrawer(state.openPart);
 }
 
@@ -109,10 +114,13 @@ function setView(view) {
   state.view = view;
   for (const b of document.querySelectorAll("[data-view]")) b.setAttribute("aria-pressed", String(b.dataset.view === view));
   $("#story").hidden = view !== "story";
-  for (const el of document.querySelectorAll("[data-analysis]")) el.hidden = view === "story";
-  history.replaceState(null, "", view === "story" ? "#story" : location.pathname + location.search);
+  $("#sales").hidden = view !== "sales";
+  for (const el of document.querySelectorAll("[data-analysis]")) el.hidden = view !== "analysis";
+  history.replaceState(null, "", view === "analysis" ? location.pathname + location.search : `#${view}`);
   if (view === "story" && state.result) drawStory();
   else destroyStory();
+  if (view === "sales" && state.result) drawSales();
+  else destroySales();
   window.scrollTo(0, 0);
 }
 
@@ -549,6 +557,10 @@ const POLICY_GROUPS = [
     { path: "wave2_share", label: "Wave 2 covers", hint: "% of VMI/CRP spend, top suppliers", unit: "%", ...pctF },
     { path: "wave_months", label: "Months per wave", step: 1, min: 1, int: true },
   ] },
+  { title: "Sales view", fields: [
+    { path: "destock_weeks", label: "Plant reaches target stock in", hint: "weeks; sets the sell-in dip", step: 1, min: 1, int: true },
+    { path: "sales_horizon_weeks", label: "Sell-in projection", hint: "weeks ahead", step: 1, min: 4, max: 52, int: true },
+  ] },
 ];
 const getPath = (o, p) => p.split(".").reduce((x, k) => x?.[k], o);
 function setPath(o, p, v) { const ks = p.split("."); const last = ks.pop(); ks.reduce((x, k) => x[k], o)[last] = v; }
@@ -735,6 +747,7 @@ function bind() {
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     if (state.openPart) renderDrawer(state.openPart);
     if (state.view === "story" && state.result) drawStory();
+    if (state.view === "sales" && state.result) drawSales();
   });
   document.querySelector(".seg").addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b && b.dataset.view !== state.view) setView(b.dataset.view); });
 }
@@ -764,11 +777,18 @@ function drawStory() {
     current: scenarioMetrics(state.result, state.insights),
     currentChanges: describeChanges(state.policy),
     openPart: (pn) => openDrawer(pn),
-    filterSupplier: (sup) => {
-      state.filters = { ...emptyFilters(), supplier: sup };
-      syncFilterInputs(); setView("analysis"); setTab("parts"); renderMatrix(); renderMigration(); renderTable();
-    },
+    filterSupplier,
   });
+}
+
+function filterSupplier(sup) {
+  state.filters = { ...emptyFilters(), supplier: sup };
+  syncFilterInputs(); setView("analysis"); setTab("parts"); renderMatrix(); renderMigration(); renderTable();
+}
+
+function drawSales() {
+  if (!state.result) return;
+  renderSales($("#sales"), state.result, state.policy, state.sales, { filterSupplier });
 }
 
 function renderWaves() {
@@ -916,7 +936,15 @@ function bindDirector() {
     const png = e.target.closest("[data-png]");
     if (png) downloadPng(png.dataset.png);
   });
-  document.addEventListener("fullscreenchange", () => { if (state.view === "story") drawStory(); });
+  $("#sales").addEventListener("click", (e) => {
+    if (e.target.closest("[data-act]")?.dataset.act === "present") {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else $("#sales").requestFullscreen?.().catch(() => {});
+    }
+    const png = e.target.closest("[data-png]");
+    if (png) downloadPng(png.dataset.png);
+  });
+  document.addEventListener("fullscreenchange", () => { if (state.view === "story") drawStory(); if (state.view === "sales") drawSales(); });
   $("#tab-scenarios").addEventListener("click", (e) => {
     const b = e.target.closest("[data-scen]");
     if (!b) return;

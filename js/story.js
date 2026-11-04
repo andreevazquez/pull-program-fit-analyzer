@@ -1,8 +1,8 @@
 // Story view: charts only, one takeaway per chart, for steering meetings.
 // Every headline is computed from the current result, so it follows the Policy panel.
-import { PROGRAMS } from "./segment.js?v=10";
-import { SCENARIO_ROWS } from "./insights.js?v=10";
-import { esc, fmtM, fmtPct, plain } from "./format.js?v=10";
+import { PROGRAMS } from "./segment.js?v=11";
+import { SCENARIO_ROWS } from "./insights.js?v=11";
+import { esc, fmtM, fmtPct, plain } from "./format.js?v=11";
 
 const charts = new Map();
 
@@ -431,3 +431,6 @@ export function storyCards(container) {
     table: el.querySelector("table"),
   }));
 }
+
+// Shared with the Sales view (js/sales-view.js), so both read as one system.
+export { theme, legend, axisCat, axisVal, money, opts, barLabels };
