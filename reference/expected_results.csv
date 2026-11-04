@@ -1,0 +1,151 @@
+part_number,data_issues,abc,super_a,xyz,trend,cv,zero_share,annual_spend,current_program,recommended_program,reason,program_change,target_qty,dos_current,dos_target,inv_value_current,inv_value_target,excess_value,consignment_transfer_value
+FX-MLC-1007,,B,False,X,Flat,0.438,0.0,94452.0,MRP,Kanban,"Mid spend, stable, low unit cost",True,267115.0,41.3,21.0,10720.2,5449.15,4181.22,0.0
+FX-MLC-1014,,B,False,X,Flat,0.1356,0.0,90296.8,MRP,Kanban,"Mid spend, stable, low unit cost",True,591981.0,29.6,21.0,7339.2,5209.43,1087.88,0.0
+FX-MLC-1021,,B,False,X,Flat,0.3701,0.0,58935.2,MRP,Kanban,"Mid spend, stable, low unit cost",True,369577.0,23.0,21.0,3726.0,3400.11,0.0,0.0
+FX-MLC-1028,,B,False,Z,Flat,1.2996,0.5769,57132.0,Kanban,MRP,Erratic/intermittent demand: pull would hide risk,True,1776587.0,26.4,61.1,4139.1,9593.57,0.0,0.0
+FX-MLC-1035,,B,False,Z,Flat,1.1544,0.5,162655.2,VMI,MRP,Erratic/intermittent demand: pull would hide risk,True,1619036.0,37.9,55.1,16932.8,24609.35,0.0,0.0
+FX-MLC-1042,,B,False,X,Flat,0.2598,0.0,126225.4,MRP,Kanban,"Mid spend, stable, low unit cost",True,358731.0,133.0,21.0,46121.6,7282.24,37382.91,0.0
+FX-MLC-1049,,C,False,X,Flat,0.2126,0.0,16632.0,Kanban,Kanban,"Low spend: simplest control, two-bin",False,137077.0,27.9,21.0,1274.0,959.54,122.55,0.0
+FX-MLC-1056,No demand in 26 wks,,,,,,,,,,,,,,,,,,
+FX-MLC-1063,,C,False,X,Flat,0.088,0.0,28227.5,MRP,Kanban,"Low spend: simplest control, two-bin",True,93058.0,33.4,21.0,2590.0,1628.52,635.78,0.0
+FX-MLC-1070,,B,False,X,Flat,0.2955,0.0,125176.1,MRP,Kanban,"Mid spend, stable, low unit cost",True,153981.0,35.7,21.0,12264.35,7221.71,3598.3,0.0
+FX-MLC-1077,,A,False,Y,Flat,0.581,0.0385,405622.0,MRP,CRP,"High spend, moderate variability",True,343945.0,31.7,15.1,35304.5,16853.3,15080.53,0.0
+FX-MLC-1084,,A,False,X,Flat,0.2324,0.0,254296.0,MRP,VMI,"High spend, stable demand, long LT",True,321731.0,38.6,14.0,26949.6,9780.62,15212.85,8383.39
+FX-MLC-1091,,B,False,X,Flat,0.17,0.0,109756.1,MRP,Kanban,"Mid spend, stable, low unit cost",True,182481.0,24.0,21.0,7234.95,6332.09,0.0,0.0
+FX-MLC-1098,,C,False,X,Flat,0.2842,0.0,19729.0,MRP,Kanban,"Low spend: simplest control, two-bin",True,104423.0,50.4,21.0,2730.45,1138.21,1364.6,0.0
+FX-MLC-1105,,C,False,X,Flat,0.3372,0.0,2509.3,VMI,Kanban,"Low spend: simplest control, two-bin",True,62942.0,110.1,21.0,759.0,144.77,585.28,0.0
+FX-MLC-1112,,B,False,X,Flat,0.319,0.0,86399.5,MRP,Kanban,"Mid spend, stable, low unit cost",True,906288.0,29.3,21.0,6963.0,4984.58,981.5,0.0
+FX-MLC-1119,,A,False,X,Flat,0.497,0.0385,380375.0,CRP,VMI,"High spend, stable demand, long LT",True,585192.0,34.7,14.0,36287.5,14629.8,18731.74,12539.83
+FX-MLC-1126,,B,False,X,Flat,0.2629,0.0,58636.0,MRP,Kanban,"Mid spend, stable, low unit cost",True,845712.0,29.3,21.0,4716.0,3382.85,656.58,0.0
+FX-MLC-1133,,B,False,X,Flat,0.1809,0.0,192852.0,MRP,Kanban,"Mid spend, stable, low unit cost",True,309058.0,55.0,21.0,29142.0,11126.09,15790.69,0.0
+FX-MLC-1140,,C,False,X,Flat,0.2562,0.0,18328.8,MRP,Kanban,"Low spend: simplest control, two-bin",True,503538.0,134.2,21.0,6759.9,1057.43,5490.98,0.0
+FX-MLC-1147,,C,False,X,Flat,0.1665,0.0,4085.4,MRP,Kanban,"Low spend: simplest control, two-bin",True,71423.0,132.2,21.0,1483.35,235.7,1200.51,0.0
+FX-MLC-1154,,B,False,Z,Flat,0.931,0.3846,135993.0,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,458274.0,41.6,52.6,15551.25,19659.95,0.0,0.0
+FX-MLC-1161,,B,False,X,Flat,0.2003,0.0,227688.6,MRP,Kanban,"Mid spend, stable, low unit cost",True,1076712.0,136.6,21.0,85473.2,13135.89,69710.14,0.0
+FX-MLC-1168,,C,False,X,Flat,0.2271,0.0,40992.0,MRP,Kanban,"Low spend: simplest control, two-bin",True,369519.0,34.1,21.0,3836.8,2364.92,998.89,0.0
+FX-MLC-1175,,C,False,X,Flat,0.4709,0.0,7273.0,MRP,Kanban,"Low spend: simplest control, two-bin",True,59942.0,53.8,21.0,1074.5,419.59,570.99,0.0
+FX-MLC-1182,,B,False,X,Flat,0.1754,0.0,223799.1,MRP,Kanban,"Mid spend, stable, low unit cost",True,233481.0,106.4,21.0,65419.9,12911.5,49926.1,0.0
+FX-MLC-1189,,A,False,Y,Ramp,0.6673,0.1538,448490.0,MRP,MRP,"Ramp-up: demand not stable yet, keep in MRP and revisit",False,1466984.0,23.9,35.8,29452.85,44156.22,0.0,0.0
+FX-MLC-1196,,C,False,X,Flat,0.1683,0.0,31041.1,VMI,Kanban,"Low spend: simplest control, two-bin",True,267288.0,38.5,21.0,3279.65,1790.83,1130.65,0.0
+FX-MLC-1203,,C,False,Z,Flat,1.2556,0.5385,3060.2,VMI,MRP,Erratic/intermittent demand: pull would hide risk,True,302160.0,33.6,79.1,282.7,664.75,0.0,0.0
+FX-MLC-1210,,C,False,X,Flat,0.1525,0.0,23010.0,CRP,Kanban,"Low spend: simplest control, two-bin",True,225000.0,49.5,21.0,3129.95,1327.5,1536.95,0.0
+FX-THI-1217,,C,False,X,Flat,0.1192,0.0,5850.0,MRP,Kanban,"Low spend: simplest control, two-bin",True,129808.0,34.3,21.0,551.2,337.5,146.2,0.0
+FX-THI-1224,,C,False,X,Flat,0.1676,0.0,41376.5,CRP,Kanban,"Low spend: simplest control, two-bin",True,434019.0,51.8,21.0,5885.0,2387.1,3020.47,0.0
+FX-THI-1231,,C,False,X,Flat,0.1622,0.0,10428.4,MRP,Kanban,"Low spend: simplest control, two-bin",True,207462.0,56.0,21.0,1605.15,601.64,883.18,0.0
+FX-THI-1238,,C,False,X,Flat,0.1339,0.0,4572.4,Kanban,Kanban,"Low spend: simplest control, two-bin",False,188423.0,40.2,21.0,505.4,263.79,188.85,0.0
+FX-THI-1245,,C,False,X,Flat,0.3243,0.0,5622.4,MRP,Kanban,"Low spend: simplest control, two-bin",True,231692.0,112.9,21.0,1743.7,324.37,1354.46,0.0
+FX-THI-1252,,C,False,X,Flat,0.095,0.0,23331.8,Kanban,Kanban,"Low spend: simplest control, two-bin",False,156519.0,52.5,21.0,3362.6,1346.06,1747.32,0.0
+FX-THI-1259,,C,False,X,Flat,0.1154,0.0,10276.8,MRP,Kanban,"Low spend: simplest control, two-bin",True,370558.0,46.2,21.0,1303.2,592.89,591.73,0.0
+FX-THI-1266,,B,False,X,Flat,0.1058,0.0,89260.0,MRP,Kanban,"Mid spend, stable, low unit cost",True,2059846.0,36.8,21.0,9021.25,5149.62,2841.71,0.0
+FX-THI-1273,,C,False,X,Flat,0.3545,0.0,35112.0,MRP,Kanban,"Low spend: simplest control, two-bin",True,1066154.0,40.7,21.0,3927.3,2025.69,1496.47,0.0
+FX-THI-1280,Missing lead time,,,,,,,,,,,,,,,,,,
+FX-THI-1287,,C,False,X,Flat,0.2507,0.0,19630.0,CRP,Kanban,"Low spend: simplest control, two-bin",True,453000.0,24.4,21.0,1316.25,1132.5,0.0,0.0
+FX-THI-1294,,C,False,X,Flat,0.4795,0.0,4690.5,MRP,Kanban,"Low spend: simplest control, two-bin",True,180404.0,135.4,21.0,1744.5,270.61,1419.77,0.0
+FX-THI-1301,Zero/blank cost,,,,,,,,,,,,,,,,,,
+FX-THI-1308,,C,False,Y,Ramp,0.617,0.1154,54119.8,MRP,MRP,"Ramp-up: demand not stable yet, keep in MRP and revisit",False,1387434.0,34.4,40.1,5114.85,5965.97,0.0,0.0
+FX-THI-1315,No demand in 26 wks,,,,,,,,,,,,,,,,,,
+FX-THI-1322,,C,False,X,Flat,0.3027,0.0,49328.4,CRP,Kanban,"Low spend: simplest control, two-bin",True,646788.0,46.9,21.0,6349.2,2845.87,2934.16,0.0
+FX-THI-1329,,C,False,Y,Declining,0.5949,0.0,3777.4,VMI,MRP,Declining/EOL risk: don't commit a supplier to buffer it,True,172503.0,23.6,36.6,245.3,379.51,0.0,0.0
+FX-THI-1336,Zero/blank cost,,,,,,,,,,,,,,,,,,
+FX-THI-1343,,C,False,X,Flat,0.2757,0.0,42996.7,VMI,Kanban,"Low spend: simplest control, two-bin",True,605019.0,54.0,21.0,6379.6,2480.58,3402.91,0.0
+FX-THI-1350,,C,False,X,Flat,0.1802,0.0,17034.6,MRP,Kanban,"Low spend: simplest control, two-bin",True,446712.0,109.0,21.0,5100.7,982.77,3921.38,0.0
+FX-THI-1357,,C,False,Z,Flat,1.9973,0.7692,33114.4,Kanban,MRP,Erratic/intermittent demand: pull would hide risk,True,1257542.0,107.7,121.6,9798.8,11066.37,0.0,0.0
+FX-THI-1364,,C,False,X,Flat,0.1873,0.0,33971.6,MRP,Kanban,"Low spend: simplest control, two-bin",True,1507615.0,129.2,21.0,12056.85,1959.9,9704.97,0.0
+FX-THI-1371,,B,False,X,Flat,0.4655,0.0,78666.0,VMI,Kanban,"Mid spend, stable, low unit cost",True,2161154.0,37.1,21.0,8009.4,4538.42,2563.29,0.0
+FX-THI-1378,,C,False,Z,Flat,1.209,0.5385,2561.0,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,363138.0,45.9,67.1,323.05,472.08,0.0,0.0
+FX-THI-1385,,C,False,X,Flat,0.3374,0.0,4607.4,MRP,Kanban,"Low spend: simplest control, two-bin",True,126577.0,32.3,21.0,408.45,265.81,89.48,0.0
+FX-POW-1392,,C,False,X,Flat,0.1394,0.0,29615.04,MRP,Kanban,"Low spend: simplest control, two-bin",True,50400.0,25.5,21.0,2078.07,1708.56,27.8,0.0
+FX-POW-1399,,C,False,Y,Flat,0.5333,0.0385,20634.0,Kanban,Kanban,"Low spend: simplest control, two-bin",False,11643.0,48.0,22.3,2720.43,1264.43,1203.11,0.0
+FX-POW-1406,,C,False,X,Flat,0.1439,0.0,15265.54,MRP,Kanban,"Low spend: simplest control, two-bin",True,24329.0,53.5,21.0,2244.4,880.71,1187.55,0.0
+FX-POW-1413,,C,False,X,Declining,0.4635,0.0,3894.84,MRP,MRP,Declining/EOL risk: don't commit a supplier to buffer it,False,9776.0,22.5,31.9,240.81,341.18,0.0,0.0
+FX-POW-1420,,B,False,X,Flat,0.126,0.0,69638.5,MRP,Kanban,"Mid spend, stable, low unit cost",True,11827.0,55.2,21.0,10564.67,4017.63,5743.51,0.0
+FX-POW-1427,,B,False,X,Flat,0.3268,0.0,62307.0,CRP,Kanban,"Mid spend, stable, low unit cost",True,57058.0,38.5,21.0,6583.5,3594.65,2269.92,0.0
+FX-POW-1434,,C,False,X,Flat,0.4875,0.0,30062.28,MRP,Kanban,"Low spend: simplest control, two-bin",True,22881.0,61.7,21.0,5093.76,1734.38,3012.5,0.0
+FX-POW-1441,,C,False,X,Flat,0.1193,0.0,18257.16,MRP,Kanban,"Low spend: simplest control, two-bin",True,8146.0,105.0,21.0,5268.98,1053.28,4005.04,0.0
+FX-POW-1448,,A,False,X,Flat,0.458,0.0385,312938.05,MRP,VMI,"High spend, stable demand, long LT",True,24488.0,25.1,14.0,21576.85,12035.85,7133.83,10316.41
+FX-POW-1455,,A,False,X,Flat,0.3081,0.0,852404.8,MRP,VMI,"High spend, stable demand, long LT",True,53500.0,46.8,14.0,109691.2,32784.8,70349.44,28101.26
+FX-POW-1462,,C,False,X,Flat,0.1013,0.0,48725.88,MRP,Kanban,"Low spend: simplest control, two-bin",True,14140.0,25.8,21.0,3449.18,2811.03,75.94,0.0
+FX-POW-1469,,B,False,Z,Flat,1.8225,0.7308,166732.8,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,265113.0,50.7,96.3,23212.8,44114.8,0.0,0.0
+FX-BOA-1476,,C,False,Z,Flat,1.6002,0.6538,3783.312,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,4239.0,35.5,99.7,369.04,1036.01,0.0,0.0
+FX-BOA-1483,,B,False,Z,Flat,1.1059,0.4615,157833.0,VMI,MRP,Erratic/intermittent demand: pull would hide risk,True,126185.0,49.9,43.1,21637.2,18700.62,0.0,0.0
+FX-BOA-1490,,C,False,Y,Flat,0.526,0.0385,17120.82,MRP,Kanban,"Low spend: simplest control, two-bin",True,8001.0,92.2,22.1,4338.66,1039.33,3091.46,0.0
+FX-BOA-1497,,C,False,X,Declining,0.3773,0.0,26674.11,MRP,MRP,Declining/EOL risk: don't commit a supplier to buffer it,False,1770.0,33.4,26.5,2447.87,1942.93,116.36,0.0
+FX-BOA-1504,,A,False,Y,Ramp,0.5326,0.0769,599335.02,MRP,MRP,"Ramp-up: demand not stable yet, keep in MRP and revisit",False,49972.0,48.7,25.5,80221.66,41911.52,29927.84,0.0
+FX-BOA-1511,,B,False,X,Flat,0.4717,0.0,81169.66,MRP,CRP,"Mid spend, stable, higher unit cost",True,1709.0,57.7,14.0,12858.56,3121.49,9112.77,0.0
+FX-BOA-1518,,C,False,Z,Flat,1.0464,0.4615,32522.24,Kanban,MRP,Erratic/intermittent demand: pull would hide risk,True,10791.0,29.6,49.5,2641.92,4419.99,0.0,0.0
+FX-BOA-1525,,C,False,Z,Flat,1.5789,0.6538,39204.8,VMI,MRP,Erratic/intermittent demand: pull would hide risk,True,52143.0,40.8,88.7,4396.8,9552.6,0.0,0.0
+FX-BOA-1532,,C,False,Z,Flat,1.3078,0.5385,3303.72,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,5346.0,55.6,77.2,504.73,700.86,0.0,0.0
+FX-BOA-1539,,A,False,Y,Ramp,0.6456,0.1538,247596.6,Kanban,MRP,"Ramp-up: demand not stable yet, keep in MRP and revisit",True,42676.0,23.3,36.8,15878.35,25050.81,0.0,0.0
+FX-BOA-1546,,C,False,X,Flat,0.1551,0.0,22143.9,MRP,Kanban,"Low spend: simplest control, two-bin",True,5729.0,44.9,21.0,2731.75,1277.57,1198.67,0.0
+FX-BOA-1553,,B,False,Z,Flat,2.5381,0.8462,143046.06,CRP,MRP,Erratic/intermittent demand: pull would hide risk,True,17215.0,21.7,116.7,8524.16,45857.32,0.0,0.0
+FX-BOA-1560,,B,False,X,Flat,0.1927,0.0,191045.0,MRP,CRP,"Mid spend, stable, higher unit cost",True,7308.0,86.0,14.0,45146.95,7348.19,36329.12,0.0
+FX-BOA-1567,,A,True,X,Flat,0.1564,0.0,1724504.6,MRP,VMI,"High spend, stable demand, long LT",True,38362.0,52.6,14.0,249321.8,66327.9,169728.32,56852.6
+FX-BOA-1574,,C,False,X,Flat,0.1506,0.0,31879.1,MRP,Kanban,"Low spend: simplest control, two-bin",True,4633.0,28.1,21.0,2461.4,1839.3,254.24,0.0
+FX-BOA-1581,,C,False,X,Flat,0.2727,0.0,32775.272,MRP,Kanban,"Low spend: simplest control, two-bin",True,1555.0,56.7,21.0,5105.94,1890.41,2837.44,0.0
+FX-WIR-1588,,B,False,Y,Flat,0.519,0.0,153423.54,MRP,CRP,"Mid spend, moderate variability",True,5435.0,31.9,14.0,13463.92,5901.32,6382.33,0.0
+FX-WIR-1595,,A,False,X,Flat,0.2226,0.0,327995.36,MRP,VMI,"High spend, stable demand, long LT",True,13369.0,52.8,14.0,47557.44,12614.99,32419.45,10812.82
+FX-WIR-1602,,C,False,X,Declining,0.4046,0.0,52551.05,MRP,MRP,Declining/EOL risk: don't commit a supplier to buffer it,False,14462.0,133.4,26.3,19264.35,3790.49,14715.76,0.0
+FX-WIR-1609,,B,False,X,Flat,0.4221,0.0,142916.88,VMI,CRP,"Mid spend, stable, higher unit cost",True,1362.0,54.4,14.0,21356.79,5498.67,14758.39,0.0
+FX-WIR-1616,,C,False,X,Flat,0.3659,0.0,55403.956,MRP,Kanban,"Low spend: simplest control, two-bin",True,2661.0,48.2,21.0,7339.94,3196.66,3503.95,0.0
+FX-WIR-1623,,C,False,X,Flat,0.2648,0.0,37884.42,VMI,Kanban,"Low spend: simplest control, two-bin",True,1111.0,126.2,21.0,13139.56,2185.34,10517.16,0.0
+FX-WIR-1630,,A,False,Z,Flat,1.1668,0.5,688851.87,Kanban,MRP,Erratic/intermittent demand: pull would hide risk,True,63179.0,37.7,55.6,71266.28,105199.35,0.0,0.0
+FX-WIR-1637,,A,False,Z,Flat,1.6429,0.6923,384634.25,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,41878.0,47.9,67.0,50636.46,70803.13,0.0,0.0
+FX-WIR-1644,,C,False,X,Declining,0.4654,0.0,17749.55,MRP,MRP,Declining/EOL risk: don't commit a supplier to buffer it,False,5059.0,29.8,30.1,1452.5,1469.64,0.0,0.0
+FX-WIR-1651,,B,False,Z,Flat,1.1283,0.5,106096.76,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,10769.0,23.0,55.8,6715.94,16252.57,0.0,0.0
+FX-MIC-1658,,B,False,Y,Ramp,0.829,0.2692,56425.638,MRP,MRP,"Ramp-up: demand not stable yet, keep in MRP and revisit",False,3678.0,23.9,63.2,3703.1,9798.56,0.0,0.0
+FX-MIC-1665,,A,False,X,Flat,0.1504,0.0,711292.88,VMI,VMI,"High spend, stable demand, long LT",False,2508.0,32.9,14.0,64365.46,27360.78,31532.53,23452.57
+FX-MIC-1672,,A,False,X,Flat,0.2616,0.0,291574.14,VMI,VMI,"High spend, stable demand, long LT",False,2158.0,100.6,14.0,80559.7,11215.99,67100.51,9613.93
+FX-MIC-1679,MOQ > 8 wks of demand,A,False,Y,Declining,0.6615,0.0,293612.55,MRP,MRP,Declining/EOL risk: don't commit a supplier to buffer it,False,28122.0,37.0,88.6,29869.68,71488.94,0.0,0.0
+FX-MIC-1686,,A,True,Z,Flat,0.9299,0.4231,2648840.46,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,101337.0,21.1,62.8,153797.82,457050.14,0.0,0.0
+FX-MIC-1693,,A,False,X,Flat,0.2002,0.0,906834.0,CRP,VMI,"High spend, stable demand, long LT",True,16569.0,59.6,14.0,148402.5,34877.75,106549.21,29895.14
+FX-MIC-1700,,B,False,X,Flat,0.2368,0.0,185392.378,MRP,CRP,"Mid spend, stable, higher unit cost",True,1347.0,42.7,14.0,21757.93,7130.88,13200.87,0.0
+FX-MIC-1707,,A,True,X,Flat,0.4488,0.0385,2172337.08,VMI,VMI,"High spend, stable demand, long LT",False,17215.0,126.4,14.0,754202.82,83549.56,653943.35,71613.64
+FX-MIC-1714,,B,False,X,Flat,0.2289,0.0,65157.804,MRP,CRP,"Mid spend, stable, higher unit cost",True,1481.0,103.3,29.4,18489.77,5255.92,12182.66,0.0
+FX-MIC-1721,,B,False,Z,Flat,1.3715,0.6154,158360.44,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,8881.0,24.1,92.3,10491.04,40159.88,0.0,0.0
+FX-MIC-1728,MOQ > 8 wks of demand,A,False,X,Flat,0.1363,0.0,1161670.44,MRP,VMI,"High spend, stable demand, long LT",True,37451.0,40.3,52.4,128702.74,167072.66,0.0,160689.85
+FX-MIC-1735,,B,False,Z,Flat,1.4701,0.6154,135177.328,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,6781.0,61.0,117.8,22637.04,43732.7,0.0,0.0
+FX-POW-1742,,B,False,Y,Flat,0.5757,0.0769,121452.76,CRP,CRP,"Mid spend, moderate variability",False,3310.0,57.9,21.1,19322.03,7028.12,10888.28,0.0
+FX-POW-1749,,B,False,X,Flat,0.1521,0.0,104339.256,MRP,CRP,"Mid spend, stable, higher unit cost",True,1536.0,62.6,14.0,17947.19,4012.65,13132.01,0.0
+FX-POW-1756,,A,True,X,Flat,0.1389,0.0,1610363.7,MRP,VMI,"High spend, stable demand, long LT",True,12481.0,56.1,14.0,248130.0,61938.21,173804.15,53090.06
+FX-POW-1763,,B,False,Z,Flat,0.9345,0.3077,84284.13,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,6577.0,119.8,67.1,27740.58,15527.64,9107.41,0.0
+FX-POW-1770,,C,False,Z,Flat,2.1968,0.7692,27268.48,CRP,MRP,Erratic/intermittent demand: pull would hide risk,True,12374.0,36.5,164.4,2736.8,12314.6,0.0,0.0
+FX-POW-1777,,B,False,X,Flat,0.4045,0.0,117667.54,MRP,CRP,"Mid spend, stable, higher unit cost",True,3132.0,22.6,15.5,7294.1,5020.91,1269.01,0.0
+FX-POW-1784,,A,True,X,Flat,0.2356,0.0,4786885.84,MRP,VMI,"High spend, stable demand, long LT",True,27331.0,31.6,14.0,415299.06,184112.55,194364.0,157810.98
+FX-POW-1791,,A,True,X,Flat,0.2484,0.0,1987382.91,VMI,VMI,"High spend, stable demand, long LT",False,13765.0,30.2,14.0,164643.49,76435.67,72920.68,65515.98
+FX-POW-1798,,A,True,X,Flat,0.4181,0.0,1312911.36,MRP,VMI,"High spend, stable demand, long LT",True,9415.0,92.7,14.0,334395.52,50494.53,273802.09,43280.73
+FX-POW-1805,,A,False,Y,Flat,0.5192,0.0385,244200.96,MRP,VMI,"High spend, moderate variability, LT >= 12 wks",True,3692.0,32.7,17.5,21939.93,11739.45,7852.59,10397.69
+FX-POW-1812,,A,False,Y,Flat,0.5447,0.0769,534044.29,Kanban,VMI,"High spend, moderate variability, LT >= 12 wks",True,8587.0,48.8,14.4,71583.09,21123.16,46235.3,18188.85
+FX-POW-1819,,B,False,Y,Flat,0.5009,0.0,181909.952,CRP,CRP,"Mid spend, moderate variability",False,2751.0,36.6,22.0,18295.08,11013.08,5079.39,0.0
+FX-DIS-1826,,B,False,X,Flat,0.2371,0.0,105200.76,MRP,Kanban,"Mid spend, stable, low unit cost",True,54531.0,84.4,21.0,24385.83,6069.3,17102.67,0.0
+FX-DIS-1833,,C,False,X,Flat,0.1667,0.0,53351.1,CRP,Kanban,"Low spend: simplest control, two-bin",True,27433.0,30.1,21.0,4415.07,3077.98,721.49,0.0
+FX-DIS-1840,,C,False,X,Flat,0.2141,0.0,34262.0,MRP,Kanban,"Low spend: simplest control, two-bin",True,106846.0,61.3,21.0,5772.0,1976.65,3400.02,0.0
+FX-DIS-1847,,A,False,X,Flat,0.2057,0.0,232848.63,MRP,VMI,"High spend, stable demand, long LT",True,33681.0,42.5,14.0,27174.98,8955.78,16428.05,7676.39
+FX-DIS-1854,,C,False,X,Flat,0.2471,0.0,18815.2,MRP,Kanban,"Low spend: simplest control, two-bin",True,93577.0,38.7,21.0,2001.0,1085.49,698.41,0.0
+FX-DIS-1861,,C,False,Z,Flat,1.2034,0.5,25418.1,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,311648.0,30.7,86.1,2142.3,6014.81,0.0,0.0
+FX-DIS-1868,,B,False,X,Flat,0.1357,0.0,75541.2,MRP,Kanban,"Mid spend, stable, low unit cost",True,82385.0,24.0,21.0,4972.6,4358.17,0.0,0.0
+FX-DIS-1875,Missing lead time,,,,,,,,,,,,,,,,,,
+FX-DIS-1882,,C,False,X,Flat,0.3125,0.0,18120.68,CRP,Kanban,"Low spend: simplest control, two-bin",True,23129.0,40.3,21.0,2004.62,1045.43,750.1,0.0
+FX-DIS-1889,,C,False,X,Flat,0.2134,0.0,51172.56,MRP,Kanban,"Low spend: simplest control, two-bin",True,24767.0,40.5,21.0,5691.8,2952.23,2149.13,0.0
+FX-DIS-1896,,C,False,X,Flat,0.2632,0.0,21268.79,MRP,Kanban,"Low spend: simplest control, two-bin",True,28079.0,30.7,21.0,1796.07,1227.05,323.61,0.0
+FX-DIS-1903,,B,False,X,Flat,0.4503,0.0,57435.35,VMI,Kanban,"Mid spend, stable, low unit cost",True,33640.0,55.8,21.0,8805.9,3313.54,4829.65,0.0
+FX-DIS-1910,,A,True,X,Flat,0.1219,0.0,1831178.2,MRP,VMI,"High spend, stable demand, long LT",True,340077.0,31.9,14.0,160398.95,70429.95,75883.01,60368.53
+FX-DIS-1917,,C,False,X,Flat,0.1668,0.0,26944.14,MRP,Kanban,"Low spend: simplest control, two-bin",True,33940.0,33.4,21.0,2473.2,1554.45,607.86,0.0
+FX-CRY-1924,,C,False,Y,Declining,0.6513,0.0,15369.6,MRP,MRP,Declining/EOL risk: don't commit a supplier to buffer it,False,5943.0,30.7,45.1,1296.81,1902.95,0.0,0.0
+FX-CRY-1931,,C,False,Z,Flat,1.329,0.5769,13955.76,VMI,MRP,Erratic/intermittent demand: pull would hide risk,True,25654.0,27.1,73.1,1037.4,2801.42,0.0,0.0
+FX-CRY-1938,,C,False,X,Ramp,0.4855,0.0385,7941.12,Kanban,MRP,"Ramp-up: demand not stable yet, keep in MRP and revisit",True,5539.0,30.3,35.7,661.76,779.89,0.0,0.0
+FX-CRY-1945,,B,False,Z,Flat,0.9049,0.3462,62204.48,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,12515.0,130.2,46.1,22256.36,7879.44,12801.03,0.0
+FX-CRY-1952,,C,False,Z,Flat,1.2263,0.5385,5483.03,MRP,MRP,Erratic/intermittent demand: pull would hide risk,False,10407.0,89.0,74.1,1341.25,1116.67,1.24,0.0
+FX-CRY-1959,,C,False,Y,Flat,0.5978,0.1923,45414.72,CRP,Kanban,"Low spend: simplest control, two-bin",True,12423.0,49.0,24.2,6113.52,3013.82,2496.94,0.0
+FX-CRY-1966,,C,False,Y,Ramp,0.8263,0.2692,17342.14,VMI,MRP,"Ramp-up: demand not stable yet, keep in MRP and revisit",True,8803.0,24.6,45.2,1174.08,2153.21,0.0,0.0
+FX-CRY-1973,,C,False,Y,Ramp,0.7991,0.2308,27820.62,CRP,MRP,"Ramp-up: demand not stable yet, keep in MRP and revisit",True,29343.0,47.5,46.7,3632.74,3571.04,0.0,0.0
+FX-CRY-1980,,B,False,X,Flat,0.0999,0.0,99704.38,MRP,Kanban,"Mid spend, stable, low unit cost",True,16973.0,30.6,21.0,8370.83,5752.15,1468.25,0.0
+FX-ALU-1987,,C,False,X,Flat,0.1638,0.0,27852.9,Kanban,Kanban,"Low spend: simplest control, two-bin",False,70788.0,52.2,21.0,3995.2,1606.89,2066.93,0.0
+FX-ALU-1994,Missing lead time,,,,,,,,,,,,,,,,,,
+FX-ALU-2001,,A,False,X,Declining,0.4011,0.0,480754.0,MRP,MRP,Declining/EOL risk: don't commit a supplier to buffer it,False,118593.0,91.6,24.3,121001.5,32138.7,82435.06,0.0
+FX-ALU-2008,,C,False,Z,Flat,2.5619,0.8462,5469.84,Kanban,MRP,Erratic/intermittent demand: pull would hide risk,True,73839.0,34.5,139.6,518.3,2097.03,0.0,0.0
+FX-ALU-2015,,C,False,X,Flat,0.2096,0.0,23870.08,MRP,Kanban,"Low spend: simplest control, two-bin",True,11325.0,28.3,21.0,1854.4,1377.12,201.86,0.0
+FX-ALU-2022,,C,False,Y,Declining,0.5986,0.0,49649.0,MRP,MRP,Declining/EOL risk: don't commit a supplier to buffer it,False,81511.0,59.8,39.1,8154.75,5338.97,1747.99,0.0
+FX-ALU-2029,,C,False,X,Flat,0.2687,0.0,36881.03,VMI,Kanban,"Low spend: simplest control, two-bin",True,9929.0,61.7,21.0,6246.84,2127.78,3693.5,0.0
+FX-ALU-2036,,C,False,X,Flat,0.2617,0.0,26161.5,CRP,Kanban,"Low spend: simplest control, two-bin",True,23510.0,112.3,21.0,8069.94,1509.34,6258.73,0.0
+FX-ALU-2043,,B,False,X,Flat,0.4538,0.0385,198791.2,MRP,Kanban,"Mid spend, stable, low unit cost",True,184385.0,54.6,21.0,29793.8,11468.75,16031.3,0.0
+FX-ALU-2050,,B,False,X,Flat,0.2061,0.0,101459.4,CRP,Kanban,"Mid spend, stable, low unit cost",True,199096.0,51.1,21.0,14244.3,5853.42,7220.19,0.0

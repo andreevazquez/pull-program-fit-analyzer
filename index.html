@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pull Program Fit Analyzer</title>
+  <meta name="description" content="Recommends VMI, CRP, Kanban or MRP for each purchased component, with target days of supply and the inventory the change frees up. Policy is explicit and adjustable.">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Pull Program Fit Analyzer</h1>
+      <p class="tagline">Pull programs are a portfolio decision. The policy is explicit and adjustable.</p>
+    </div>
+    <div class="actions">
+      <span class="source" id="source">Loading sample…</span>
+      <label class="btn">
+        <input type="file" id="upload" accept=".csv,text/csv" hidden>
+        Upload CSV
+      </label>
+      <button class="btn" id="export" type="button">Export CSV</button>
+      <button class="btn btn-primary" id="policyToggle" type="button" aria-expanded="false" aria-controls="policy">
+        Policy <span class="pill" id="policyDiff" hidden></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main id="main">
+      <div class="notice" id="notice" hidden></div>
+
+      <section class="kpis" id="kpis" aria-label="Summary"></section>
+
+      <section class="row2">
+        <div class="card">
+          <div class="card-head">
+            <h2>ABC × XYZ</h2>
+            <span class="hint">Spend class × demand variability. Cell color = dominant recommended program. Click to filter.</span>
+          </div>
+          <div id="matrix" class="matrix"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>Program migration</h2>
+            <span class="hint">Parts by current → recommended program. Click a cell to filter.</span>
+          </div>
+          <div id="migration"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="tabs" role="tablist">
+          <button role="tab" class="tab" data-tab="parts" aria-selected="true">Parts</button>
+          <button role="tab" class="tab" data-tab="suppliers" aria-selected="false">Supplier view</button>
+          <button role="tab" class="tab" data-tab="integrity" aria-selected="false">Data integrity <span class="pill" id="issueCount"></span></button>
+        </div>
+
+        <div class="tabpanel" id="tab-parts">
+          <div class="filters" id="filters">
+            <input type="search" id="fSearch" placeholder="Search part, description, manufacturer" aria-label="Search">
+            <select id="fCommodity" aria-label="Commodity"></select>
+            <select id="fSupplier" aria-label="Supplier"></select>
+            <select id="fAbc" aria-label="ABC class"></select>
+            <select id="fCurrent" aria-label="Current program"></select>
+            <select id="fRec" aria-label="Recommended program"></select>
+            <label class="check"><input type="checkbox" id="fSuperA"> Super A</label>
+            <label class="check"><input type="checkbox" id="fChange"> Changes only</label>
+            <label class="check"><input type="checkbox" id="fIssue"> Has issue</label>
+            <button class="btn btn-ghost" id="fClear" type="button">Clear</button>
+          </div>
+          <div class="chips" id="chips"></div>
+          <div class="table-wrap">
+            <table class="grid" id="partsTable">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="tablefoot" id="partsFoot"></p>
+        </div>
+
+        <div class="tabpanel" id="tab-suppliers" hidden>
+          <p class="hint">The negotiation list: suppliers ranked by annual spend recommended for VMI or CRP. Start at the top.</p>
+          <div class="table-wrap"><table class="grid" id="supplierTable"></table></div>
+        </div>
+
+        <div class="tabpanel" id="tab-integrity" hidden>
+          <p class="hint">Blocking issues keep a part out of segmentation until the master data is fixed. Warnings are analyzed but should be reviewed.</p>
+          <div class="table-wrap"><table class="grid" id="integrityTable"></table></div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="policy" id="policy" aria-label="Policy" hidden>
+      <div class="policy-head">
+        <h2>Policy</h2>
+        <div>
+          <button class="btn btn-ghost" id="policyReset" type="button">Reset to defaults</button>
+          <button class="btn btn-ghost icon" id="policyClose" type="button" aria-label="Close policy">×</button>
+        </div>
+      </div>
+      <p class="hint">Every threshold the recommendation depends on. Changes recompute instantly.</p>
+      <form id="policyForm" autocomplete="off"></form>
+    </aside>
+  </div>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="drawer" id="drawer" aria-label="Part detail" hidden>
+    <div class="drawer-head">
+      <div>
+        <h2 id="dTitle"></h2>
+        <p class="hint" id="dSub"></p>
+      </div>
+      <button class="btn btn-ghost icon" id="dClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="drawer-body" id="dBody"></div>
+  </aside>
+
+  <footer class="footer">
+    <span>Synthetic data. Part numbers, manufacturers and suppliers are fictional.</span>
+    <span>All computation runs in your browser; uploaded files never leave the page.</span>
+    <span>Built by <a href="https://www.linkedin.com/in/ricardovazquez88" target="_blank" rel="noopener">Ricardo Vázquez</a></span>
+  </footer>
+</body>
+</html>
