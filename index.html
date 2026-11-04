@@ -17,6 +17,10 @@
       <p class="tagline">Pull programs are a portfolio decision. The policy is explicit and adjustable.</p>
     </div>
     <div class="actions">
+      <div class="seg" role="tablist" aria-label="View">
+        <button type="button" role="tab" data-view="analysis" aria-selected="true">Analysis</button>
+        <button type="button" role="tab" data-view="story" aria-selected="false">Story</button>
+      </div>
       <span class="source" id="source">Loading sample…</span>
       <label class="btn">
         <input type="file" id="upload" accept=".csv,text/csv" hidden>
@@ -33,9 +37,11 @@
     <main id="main">
       <div class="notice" id="notice" hidden></div>
 
-      <section class="kpis" id="kpis" aria-label="Summary"></section>
+      <section class="story" id="story" aria-label="Story" hidden></section>
 
-      <section class="row2">
+      <section class="kpis" id="kpis" aria-label="Summary" data-analysis></section>
+
+      <section class="row2" data-analysis>
         <div class="card">
           <div class="card-head">
             <h2>ABC × XYZ</h2>
@@ -53,7 +59,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" data-analysis>
         <div class="tabs" role="tablist">
           <button role="tab" class="tab" data-tab="parts" aria-selected="true">Parts</button>
           <button role="tab" class="tab" data-tab="suppliers" aria-selected="false">Supplier view</button>

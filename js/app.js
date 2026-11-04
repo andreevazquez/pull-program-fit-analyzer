@@ -1,4 +1,5 @@
 import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js";
+import { renderStory, destroyStory } from "./story.js";
 
 /* ---------------- state ---------------- */
 const state = {
@@ -8,6 +9,7 @@ const state = {
   filters: emptyFilters(),
   sort: { key: "annual_spend", dir: -1 },
   tab: "parts",
+  view: location.hash === "#story" ? "story" : "analysis",
   openPart: null,
 };
 function emptyFilters() {
@@ -97,7 +99,19 @@ function renderAll() {
   renderSuppliers();
   renderIntegrity();
   renderPolicyDiff();
+  if (state.view === "story") renderStory($("#story"), state.result, state.policy);
   if (state.openPart) renderDrawer(state.openPart);
+}
+
+function setView(view) {
+  state.view = view;
+  for (const b of document.querySelectorAll("[data-view]")) b.setAttribute("aria-selected", String(b.dataset.view === view));
+  $("#story").hidden = view !== "story";
+  for (const el of document.querySelectorAll("[data-analysis]")) el.hidden = view === "story";
+  history.replaceState(null, "", view === "story" ? "#story" : location.pathname + location.search);
+  if (view === "story" && state.result) renderStory($("#story"), state.result, state.policy);
+  else destroyStory();
+  window.scrollTo(0, 0);
 }
 
 /* ---------------- KPIs ---------------- */
@@ -677,9 +691,14 @@ function bind() {
   $("#dClose").addEventListener("click", closeDrawer);
   $("#scrim").addEventListener("click", closeDrawer);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#drawer").hidden) closeDrawer(); else togglePolicy(false); } });
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (state.openPart) renderDrawer(state.openPart); });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (state.openPart) renderDrawer(state.openPart);
+    if (state.view === "story" && state.result) renderStory($("#story"), state.result, state.policy);
+  });
+  document.querySelector(".seg").addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b && b.dataset.view !== state.view) setView(b.dataset.view); });
 }
 
 bind();
+setView(state.view);
 buildPolicyForm();
 loadSample();
