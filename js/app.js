@@ -1,10 +1,11 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=11";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=11";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=11";
-import { exportDeck, canvasPng } from "./deck.js?v=11";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=11";
-import { sellIn } from "./sales.js?v=11";
-import { renderSales, destroySales } from "./sales-view.js?v=11";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=12";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=12";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=12";
+import { exportDeck, canvasPng } from "./deck.js?v=12";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=12";
+import { sellIn } from "./sales.js?v=12";
+import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=12";
+import { renderSales, destroySales } from "./sales-view.js?v=12";
 
 /* ---------------- state ---------------- */
 const VIEW_HASH = { "#story": "story", "#sales": "sales" };
@@ -19,6 +20,7 @@ const state = {
   tab: "parts",
   view: VIEW_HASH[location.hash] || "analysis",
   openPart: null,
+  lots: [], suppliersV2: [], lotsLabel: "", suppliersLabel: "", claimStatus: new Map(), openClaim: null,
 };
 function emptyFilters() {
   return { search: "", commodity: "", supplier: "", abc: "", current: "", rec: "", superA: false, change: false, issue: false, cell: null, mig: null };
@@ -85,6 +87,7 @@ function recompute() {
     state.result = analyze(state.rows, state.policy);
     state.insights = insights(state.result, state.policy);
     state.sales = sellIn(state.result, state.policy);
+    state.fresh = freshness(state.lots, state.suppliersV2, state.result.parts, state.policy);
     renderAll();
   });
 }
@@ -101,6 +104,7 @@ function renderAll() {
   renderTable();
   renderSuppliers();
   renderIntegrity();
+  renderFreshness();
   renderWaves();
   renderRisk();
   renderScenarios();
@@ -387,6 +391,117 @@ function renderIntegrity() {
     }).join("")).join("") || `<tr><td colspan="7" class="muted">No data issues found.</td></tr>`) + "</tbody>";
 }
 
+/* ---------------- freshness claims (V2_SPEC.md section 2) ---------------- */
+const CLAIM_STATUSES = ["Open", "Escalated", "Closed"];
+const parseCsvText = (text) => Papa.parse(text, { header: true, skipEmptyLines: "greedy", transformHeader: (h) => h.trim().toLowerCase() });
+
+async function loadV2() {
+  const get = async (f) => { const r = await fetch(`data_v2/${f}`, { cache: "no-cache" }); if (!r.ok) throw new Error(r.status); return r.text(); };
+  try {
+    const [lots, sup] = await Promise.all([get("inventory_lots.csv"), get("suppliers.csv")]);
+    state.lots = parseCsvText(lots).data; state.lotsLabel = "inventory_lots.csv (sample)";
+    state.suppliersV2 = parseCsvText(sup).data; state.suppliersLabel = "suppliers.csv (sample)";
+  } catch { /* freshness tab explains how to upload */ }
+  if (state.result) recompute();
+}
+
+function loadV2Text(kind, text, label) {
+  const { data, meta } = parseCsvText(text);
+  const need = kind === "lots" ? ["lot_id", "part_number", "supplier", "qty", "date_code", "received_date"] : ["supplier", "freshness_rule_months"];
+  const missing = need.filter((c) => !(meta.fields || []).includes(c));
+  if (missing.length) { showNotice(`Couldn't read <b>${esc(label)}</b>: missing column${missing.length === 1 ? "" : "s"} ${esc(missing.join(", "))}.`); return; }
+  showNotice(`Loaded <b>${esc(label)}</b>: ${data.length} ${kind === "lots" ? "lots" : "suppliers"}. The file stays in this browser.`, "ok");
+  if (kind === "lots") { state.lots = data; state.lotsLabel = label; state.claimStatus.clear(); }
+  else { state.suppliersV2 = data; state.suppliersLabel = label; }
+  recompute();
+}
+
+const claimStatus = (c) => state.claimStatus.get(c.lot_id) || c.status;
+
+function renderFreshness() {
+  const F = state.fresh, P = state.policy, el = $("#tab-freshness");
+  $("#claimCount").textContent = F.claimable.length || "";
+  const byStatus = Object.fromEntries(CLAIM_STATUSES.map((k) => [k, F.claimable.filter((c) => claimStatus(c) === k)]));
+  const sv = (a) => a.reduce((t, c) => t + (Number.isFinite(c.value) ? c.value : 0), 0);
+  const money = (v) => (Number.isFinite(v) ? fmtUSD(v) : `<span class="muted" title="Part has no valid unit cost">—</span>`);
+  const mo = (v) => fmtN(v, 1);
+  const kpi = (label, value, sub, cls = "") => `<div class="kpi ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
+  const uploads = `<div class="fresh-src">
+      <span class="muted">Lots: ${esc(state.lotsLabel || "none loaded")} · Suppliers: ${esc(state.suppliersLabel || "none loaded")} · Analysis date ${ANALYSIS_DATE}</span>
+      <label class="btn"><input type="file" accept=".csv,text/csv" data-v2="lots" hidden>Upload lots CSV</label>
+      <label class="btn"><input type="file" accept=".csv,text/csv" data-v2="suppliers" hidden>Upload suppliers CSV</label>
+      <button class="btn" type="button" data-fresh="export" ${F.claimable.length ? "" : "disabled"}>Export claims CSV</button>
+    </div>`;
+  if (!F.lots) {
+    el.innerHTML = `${uploads}<p class="hint">Upload <code>inventory_lots.csv</code> (lot_id, part_number, supplier, qty, date_code YYWW, received_date YYYY-MM-DD) and <code>suppliers.csv</code> (supplier, freshness_rule_months) to check freshness.</p>`;
+    return;
+  }
+  const claimRows = F.claimable.map((c) => {
+    const st = claimStatus(c), open = state.openClaim === c.lot_id;
+    return `<tr class="${st === "Closed" ? "closed" : ""}">
+      <td><select data-status="${esc(c.lot_id)}" aria-label="Status of claim for lot ${esc(c.lot_id)}">${CLAIM_STATUSES.map((k) => `<option${k === st ? " selected" : ""}>${k}</option>`).join("")}</select></td>
+      <td class="nowrap">${esc(c.lot_id)}</td><td class="pn clickable" tabindex="0" data-part="${esc(c.part_number)}">${esc(c.part_number)}</td><td>${esc(c.supplier)}</td>
+      <td class="n">${esc(c.date_code)}</td><td class="n">${c.mfg_date}</td><td class="n">${esc(c.received_date)}</td>
+      <td class="n"><b>${mo(c.age_receipt)}</b></td><td class="n">${c.rule}${c.rule_source === "default" ? "*" : ""}</td><td class="n">+${mo(c.age_receipt - c.rule)}</td>
+      <td class="n">${fmtN(c.qty)}</td><td class="n">${money(c.value)}</td>
+      <td><button type="button" class="btn btn-ghost" data-claim="${esc(c.lot_id)}" aria-expanded="${open}">${open ? "Hide" : "Claim text"}</button></td></tr>
+      ${open ? `<tr class="claim-text-row"><td colspan="13"><p class="claim-text">${esc(c.claim_text)}</p>
+        <button type="button" class="btn" data-copy="${esc(c.lot_id)}">Copy claim text</button></td></tr>` : ""}`;
+  }).join("");
+  el.innerHTML = `${uploads}
+    <div class="kpis fresh-kpis">
+      ${kpi("Lots checked", fmtN(F.lots), `${F.ok.length} within the freshness rule`)}
+      ${kpi("Supplier claims", `${F.claimable.length} · ${fmtM(F.claimValue)}`, `old at receipt: ${byStatus.Open.length} open, ${byStatus.Escalated.length} escalated, ${byStatus.Closed.length} closed`, "claim")}
+      ${kpi("Internal aging", `${F.aging.length} · ${fmtM(F.agingValue)}`, "fresh at receipt, over the rule today: ours, not a claim", "aging")}
+      ${kpi("Invalid lots", fmtN(F.invalid.length), F.invalid.length ? "date code or data to fix before claiming" : "all date codes valid (YYWW, week 01–53)")}
+    </div>
+    <h3>Supplier claims: old at receipt</h3>
+    <p class="hint">Age at receipt = received date − manufacture date (Monday of the date code's ISO week), against the supplier's freshness rule${P.fresh_grace_months ? ` plus ${P.fresh_grace_months} months of tolerance` : ""}. These are the supplier's responsibility. Still open: ${fmtM(sv(byStatus.Open) + sv(byStatus.Escalated))}.${F.claimable.some((c) => c.rule_source === "default") ? ` * Supplier has no rule; Policy default of ${P.fresh_default_rule_months} months used.` : ""}</p>
+    ${F.bySupplier.length ? `<p class="hint">By supplier: ${F.bySupplier.map((g) => `${esc(g.supplier)} ${g.n} (${fmtM(g.value)})`).join(" · ")}</p>` : ""}
+    <div class="table-wrap"><table class="grid"><thead><tr><th>Status</th><th>Lot</th><th>Part</th><th>Supplier</th><th class="n">Date code</th><th class="n">Manufactured</th><th class="n">Received</th><th class="n">Age at receipt (mo)</th><th class="n">Rule (mo)</th><th class="n">Over (mo)</th><th class="n">Qty</th><th class="n">Value</th><th></th></tr></thead>
+      <tbody>${claimRows || `<tr><td colspan="13" class="muted">No lot was old at receipt.</td></tr>`}</tbody></table></div>
+    <h3>Internal aging: not a supplier claim</h3>
+    <p class="hint">These lots were within the rule when received and aged here. The cost is ours: treat them as excess or slow movers (use first, sell back, or reserve), not as claims.</p>
+    <div class="table-wrap"><table class="grid"><thead><tr><th>Lot</th><th>Part</th><th>Supplier</th><th class="n">Date code</th><th class="n">Received</th><th class="n">Age at receipt (mo)</th><th class="n">Age today (mo)</th><th class="n">Rule (mo)</th><th class="n">Expired on</th><th class="n">Qty</th><th class="n">Value</th></tr></thead><tbody>
+      ${F.aging.map((c) => `<tr class="clickable" tabindex="0" data-part="${esc(c.part_number)}"><td class="nowrap">${esc(c.lot_id)}</td><td class="pn">${esc(c.part_number)}</td><td>${esc(c.supplier)}</td>
+        <td class="n">${esc(c.date_code)}</td><td class="n">${esc(c.received_date)}</td><td class="n">${mo(c.age_receipt)}</td><td class="n"><b>${mo(c.age_today)}</b></td><td class="n">${c.rule}</td>
+        <td class="n">${c.expires}</td><td class="n">${fmtN(c.qty)}</td><td class="n">${money(c.value)}</td></tr>`).join("") || `<tr><td colspan="11" class="muted">No internal aging.</td></tr>`}
+    </tbody></table></div>
+    <h3>Invalid lots</h3>
+    <div class="table-wrap"><table class="grid"><thead><tr><th>Lot</th><th>Part</th><th>Supplier</th><th class="n">Date code</th><th class="n">Received</th><th>Problem</th></tr></thead><tbody>
+      ${F.invalid.map((c) => `<tr><td>${esc(c.lot_id)}</td><td class="pn">${esc(c.part_number)}</td><td>${esc(c.supplier)}</td><td class="n">${esc(c.date_code)}</td><td class="n">${esc(c.received_date)}</td><td class="issue-warn">${esc(c.errors.join("; "))}</td></tr>`).join("") || `<tr><td colspan="6" class="muted">Every lot has a valid date code and received date.</td></tr>`}
+    </tbody></table></div>`;
+}
+
+function exportClaims() {
+  const F = state.fresh;
+  if (!F?.claimable.length) return;
+  const csv = Papa.unparse({ fields: CLAIM_COLUMNS, data: F.claimable.map((c) => claimRow(c, claimStatus(c))) });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "freshness_claims.csv" });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function bindFreshness() {
+  const el = $("#tab-freshness");
+  el.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-claim],[data-copy],[data-fresh]");
+    if (!t) return;
+    if (t.dataset.claim) { state.openClaim = state.openClaim === t.dataset.claim ? null : t.dataset.claim; renderFreshness(); }
+    if (t.dataset.fresh === "export") exportClaims();
+    if (t.dataset.copy) {
+      const c = state.fresh.claimable.find((x) => x.lot_id === t.dataset.copy);
+      navigator.clipboard?.writeText(c.claim_text).then(() => { t.textContent = "Copied"; }, () => { t.textContent = "Select the text to copy"; });
+    }
+  });
+  el.addEventListener("change", (e) => {
+    if (e.target.dataset.status) { state.claimStatus.set(e.target.dataset.status, e.target.value); renderFreshness(); }
+    const kind = e.target.dataset.v2, file = e.target.files?.[0];
+    if (kind && file) file.text().then((t) => loadV2Text(kind, t, file.name));
+  });
+}
+
 /* ---------------- drawer ---------------- */
 let chart = null;
 let drawerReturnFocus = null;
@@ -557,6 +672,10 @@ const POLICY_GROUPS = [
     { path: "wave2_share", label: "Wave 2 covers", hint: "% of VMI/CRP spend, top suppliers", unit: "%", ...pctF },
     { path: "wave_months", label: "Months per wave", step: 1, min: 1, int: true },
   ] },
+  { title: "Freshness claims", fields: [
+    { path: "fresh_default_rule_months", label: "Default freshness rule", hint: "months; when the supplier has none", step: 1, min: 1, int: true },
+    { path: "fresh_grace_months", label: "Claim only if over the rule by more than", hint: "months at receipt", step: 1, min: 0 },
+  ] },
   { title: "Sales view", fields: [
     { path: "destock_weeks", label: "Plant reaches target stock in", hint: "weeks; sets the sell-in dip", step: 1, min: 1, int: true },
     { path: "sales_horizon_weeks", label: "Sell-in projection", hint: "weeks ahead", step: 1, min: 4, max: 52, int: true },
@@ -664,7 +783,7 @@ function downloadTemplate() {
 }
 
 /* ---------------- events ---------------- */
-const TABS = ["parts", "suppliers", "waves", "risk", "scenarios", "integrity"];
+const TABS = ["parts", "suppliers", "waves", "risk", "scenarios", "freshness", "integrity"];
 function setTab(tab) {
   state.tab = tab;
   for (const b of document.querySelectorAll(".tab")) { const on = b.dataset.tab === tab; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; }
@@ -730,7 +849,7 @@ function bind() {
     state.sort = state.sort.key === key ? { key, dir: -state.sort.dir } : { key, dir: col.n ? -1 : 1 };
     renderTable();
   });
-  for (const sel of ["#partsTable tbody", "#integrityTable", "#tab-waves", "#tab-risk"]) {
+  for (const sel of ["#partsTable tbody", "#integrityTable", "#tab-waves", "#tab-risk", "#tab-freshness"]) {
     $(sel).addEventListener("click", (e) => { const r = e.target.closest("[data-part]"); if (r) openDrawer(r.dataset.part); });
   }
   $("#supplierTable").addEventListener("click", (e) => {
@@ -957,7 +1076,9 @@ function bindDirector() {
 
 bind();
 bindDirector();
+bindFreshness();
 bindKeyboard();
 setView(state.view);
 buildPolicyForm();
 loadSample();
+loadV2();

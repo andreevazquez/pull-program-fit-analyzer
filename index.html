@@ -25,10 +25,10 @@
   <meta name="twitter:description" content="Pull programs are a portfolio decision. Segment every part, set the policy, and see the inventory, carrying cost and risk it moves.">
   <meta name="twitter:image" content="https://andreevazquez.github.io/pull-program-fit-analyzer/og-image.png">
   <meta name="twitter:image:alt" content="Pull Program Fit Analyzer: an ABC by XYZ matrix colored by recommended program.">
-  <link rel="stylesheet" href="css/styles.css?v=11">
+  <link rel="stylesheet" href="css/styles.css?v=12">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script type="module" src="js/app.js?v=11"></script>
+  <script type="module" src="js/app.js?v=12"></script>
 </head>
 <body>
   <header class="topbar">
@@ -92,6 +92,7 @@
           <button role="tab" class="tab" id="tabbtn-waves" data-tab="waves" aria-controls="tab-waves" aria-selected="false" tabindex="-1">Rollout waves</button>
           <button role="tab" class="tab" id="tabbtn-risk" data-tab="risk" aria-controls="tab-risk" aria-selected="false" tabindex="-1">Risk</button>
           <button role="tab" class="tab" id="tabbtn-scenarios" data-tab="scenarios" aria-controls="tab-scenarios" aria-selected="false" tabindex="-1">Scenarios</button>
+          <button role="tab" class="tab" id="tabbtn-freshness" data-tab="freshness" aria-controls="tab-freshness" aria-selected="false" tabindex="-1">Freshness <span class="pill" id="claimCount"></span></button>
           <button role="tab" class="tab" id="tabbtn-integrity" data-tab="integrity" aria-controls="tab-integrity" aria-selected="false" tabindex="-1">Data integrity <span class="pill" id="issueCount"></span></button>
         </div>
 
@@ -126,6 +127,8 @@
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-waves" id="tab-waves" hidden></div>
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-risk" id="tab-risk" hidden></div>
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-scenarios" id="tab-scenarios" hidden></div>
+
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-freshness" id="tab-freshness" hidden></div>
 
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-integrity" id="tab-integrity" hidden>
           <p class="hint">Blocking issues keep a part out of segmentation until the master data is fixed. Warnings are analyzed but should be reviewed.</p>

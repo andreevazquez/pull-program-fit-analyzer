@@ -20,3 +20,5 @@ jobs:
         run: node test/robustness.mjs
       - name: Sales view (sell-in = sell-through ± stock change)
         run: node test/sales.mjs
+      - name: Freshness claims (V2_SPEC.md section 2)
+        run: node test/freshness.mjs

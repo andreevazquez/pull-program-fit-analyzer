@@ -1,0 +1,5 @@
+supplier,edi_enabled,vmi_agreement,hub_3pl,hub_contract_end,freshness_rule_months,otd_pct,payment_terms_days
+Distribuidor Norte (VMI-capable),Y,Y,Hub Periférico Sur 3PL,2027-03-31,24,96.5,60
+Distribuidor Pacífico,Y,N,,,24,91.2,45
+Franchise Direct,N,N,,,36,88.0,30
+Broker Bajío,N,N,,,12,79.4,0
