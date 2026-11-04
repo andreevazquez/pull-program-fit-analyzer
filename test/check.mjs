@@ -5,28 +5,9 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { analyze, resultRow, RESULT_COLUMNS, DEFAULT_POLICY } from "../js/segment.js";
+import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-
-function parseCSV(text) {
-  const rows = []; let row = [], f = "", q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) {
-      if (c === '"' && text[i + 1] === '"') { f += '"'; i++; }
-      else if (c === '"') q = false;
-      else f += c;
-    } else if (c === '"') q = true;
-    else if (c === ",") { row.push(f); f = ""; }
-    else if (c === "\n" || c === "\r") {
-      if (c === "\r" && text[i + 1] === "\n") i++;
-      row.push(f); rows.push(row); row = []; f = "";
-    } else f += c;
-  }
-  if (f !== "" || row.length) { row.push(f); rows.push(row); }
-  const [head, ...body] = rows.filter((r) => r.length > 1 || r[0] !== "");
-  return body.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ""])));
-}
 
 const input = parseCSV(readFileSync(join(root, "sample_parts.csv"), "utf8"));
 const expected = parseCSV(readFileSync(join(root, "reference", "expected_results.csv"), "utf8"));

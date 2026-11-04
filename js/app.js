@@ -1,11 +1,15 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js";
-import { renderStory, destroyStory } from "./story.js";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=5";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=5";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=5";
+import { exportDeck, canvasPng } from "./deck.js?v=5";
 
 /* ---------------- state ---------------- */
 const state = {
   rows: [],
   policy: clonePolicy(),
   result: null,
+  insights: null,
+  scenarios: [],
   filters: emptyFilters(),
   sort: { key: "annual_spend", dir: -1 },
   tab: "parts",
@@ -87,6 +91,7 @@ function recompute() {
   clearTimeout(pending);
   pending = setTimeout(() => {
     state.result = analyze(state.rows, state.policy);
+    state.insights = insights(state.result, state.policy);
     renderAll();
   });
 }
@@ -98,8 +103,11 @@ function renderAll() {
   renderTable();
   renderSuppliers();
   renderIntegrity();
+  renderWaves();
+  renderRisk();
+  renderScenarios();
   renderPolicyDiff();
-  if (state.view === "story") renderStory($("#story"), state.result, state.policy);
+  if (state.view === "story") drawStory();
   if (state.openPart) renderDrawer(state.openPart);
 }
 
@@ -109,7 +117,7 @@ function setView(view) {
   $("#story").hidden = view !== "story";
   for (const el of document.querySelectorAll("[data-analysis]")) el.hidden = view === "story";
   history.replaceState(null, "", view === "story" ? "#story" : location.pathname + location.search);
-  if (view === "story" && state.result) renderStory($("#story"), state.result, state.policy);
+  if (view === "story" && state.result) drawStory();
   else destroyStory();
   window.scrollTo(0, 0);
 }
@@ -127,6 +135,8 @@ function renderKPIs() {
     kpi("Inventory now → target", `${fmtM(S.inv_now)}<span class="arrow">→</span>${fmtM(S.inv_target)}`,
       `<span class="delta-down">${invDelta <= 0 ? "−" : "+"}${fmtPct(Math.abs(invDelta))}</span> at recommended policy`),
     kpi("Excess (right-sizing)", fmtM(S.excess), `On hand above target × ${tol.toFixed(2)}`, "excess"),
+    kpi("Carrying cost avoided", `${fmtM(state.insights.carrying.avoided)}<span class="arrow">/yr</span>`,
+      `Recurring P&L at ${fmtPct(state.policy.carrying_rate)} carrying rate`, "excess"),
     kpi("Consignment transfer", state.policy.consignment ? fmtM(S.consignment) : "Off",
       state.policy.consignment ? "VMI stock moving to supplier ownership. Not a saving." : "Consignment is off in Policy", "consign"),
     kpi("Spend in pull programs", `${fmtPct(S.pull_share_now)}<span class="arrow">→</span>${fmtPct(S.pull_share_rec)}`, "Today vs recommended (VMI, CRP, Kanban)"),
@@ -532,6 +542,13 @@ const POLICY_GROUPS = [
     { path: "moq_weeks_flag", label: "Flag MOQ above", hint: "weeks of avg demand", step: 1, min: 0 },
     { path: "lineside_days", label: "Line-side stock the plant keeps", hint: "days, VMI consignment", step: 1, min: 0 },
   ] },
+  { title: "Director views", fields: [
+    { path: "carrying_rate", label: "Carrying cost rate", hint: "% of inventory value per year", unit: "%", ...pctF },
+    { path: "eo_horizon_weeks", label: "E&O horizon", hint: "weeks of recent run-rate", step: 1, min: 1, int: true },
+    { path: "eo_dos_days", label: "Slow mover above", hint: "days on hand", step: 10, min: 0 },
+    { path: "wave2_share", label: "Wave 2 covers", hint: "% of VMI/CRP spend, top suppliers", unit: "%", ...pctF },
+    { path: "wave_months", label: "Months per wave", step: 1, min: 1, int: true },
+  ] },
 ];
 const getPath = (o, p) => p.split(".").reduce((x, k) => x?.[k], o);
 function setPath(o, p, v) { const ks = p.split("."); const last = ks.pop(); ks.reduce((x, k) => x[k], o)[last] = v; }
@@ -554,6 +571,7 @@ function buildPolicyForm() {
   const g = POLICY_GROUPS[5];
   html += `<fieldset><legend>${g.title}</legend>${g.fields.map(field).join("")}
     <label class="toggle"><span>VMI on consignment<small class="hint" style="display:block">Report the ownership transfer for VMI parts</small></span><input type="checkbox" id="pol-consignment" data-path="consignment"></label></fieldset>`;
+  html += POLICY_GROUPS.slice(6).map((g) => `<fieldset><legend>${g.title}</legend>${g.fields.map(field).join("")}</fieldset>`).join("");
   $("#policyForm").innerHTML = html;
   syncPolicyInputs();
 }
@@ -618,10 +636,11 @@ function exportCSV() {
 }
 
 /* ---------------- events ---------------- */
+const TABS = ["parts", "suppliers", "waves", "risk", "scenarios", "integrity"];
 function setTab(tab) {
   state.tab = tab;
   for (const b of document.querySelectorAll(".tab")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
-  for (const t of ["parts", "suppliers", "integrity"]) $(`#tab-${t}`).hidden = t !== tab;
+  for (const t of TABS) $(`#tab-${t}`).hidden = t !== tab;
 }
 
 function bind() {
@@ -677,7 +696,7 @@ function bind() {
     state.sort = state.sort.key === key ? { key, dir: -state.sort.dir } : { key, dir: col.n ? -1 : 1 };
     renderTable();
   });
-  for (const sel of ["#partsTable tbody", "#integrityTable"]) {
+  for (const sel of ["#partsTable tbody", "#integrityTable", "#tab-waves", "#tab-risk"]) {
     $(sel).addEventListener("click", (e) => { const r = e.target.closest("[data-part]"); if (r) openDrawer(r.dataset.part); });
   }
   $("#supplierTable").addEventListener("click", (e) => {
@@ -693,12 +712,183 @@ function bind() {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!$("#drawer").hidden) closeDrawer(); else togglePolicy(false); } });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     if (state.openPart) renderDrawer(state.openPart);
-    if (state.view === "story" && state.result) renderStory($("#story"), state.result, state.policy);
+    if (state.view === "story" && state.result) drawStory();
   });
   document.querySelector(".seg").addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b && b.dataset.view !== state.view) setView(b.dataset.view); });
 }
 
+/* ---------------- director views ---------------- */
+function policyRowsAll(policy = state.policy) {
+  const fields = POLICY_GROUPS.flatMap((g) => g.fields);
+  const rows = fields.map((f) => ({ path: f.path, label: f.label, pct: f.pct }));
+  for (const p of PROGRAMS) {
+    rows.push({ path: `review.${p}`, label: `${p} review period R (wks)` });
+    rows.push({ path: `exposure.${p}`, label: `${p} exposure L (wks)` });
+    rows.push({ path: `floor_days.${p}`, label: `${p} floor (days)` });
+  }
+  rows.push({ path: "consignment", label: "VMI on consignment" });
+  const show = (r, v) => (v === null ? "Part LT" : typeof v === "boolean" ? (v ? "On" : "Off") : r.pct ? fmtPct(v, 1).replace(".0%", "%") : String(v));
+  return rows.map((r) => {
+    const def = getPath(DEFAULT_POLICY, r.path), cur = getPath(policy, r.path);
+    return { ...r, def: show(r, def), cur: show(r, cur), changed: JSON.stringify(def) !== JSON.stringify(cur) };
+  });
+}
+const describeChanges = (policy) => policyRowsAll(policy).filter((r) => r.changed).map((r) => `${r.label}: ${r.def} → ${r.cur}`).join("; ");
+
+function drawStory() {
+  if (!state.result) return;
+  renderStory($("#story"), state.result, state.policy, state.insights, {
+    scenarios: state.scenarios,
+    current: scenarioMetrics(state.result, state.insights),
+    currentChanges: describeChanges(state.policy),
+    openPart: (pn) => openDrawer(pn),
+    filterSupplier: (sup) => {
+      state.filters = { ...emptyFilters(), supplier: sup };
+      syncFilterInputs(); setView("analysis"); setTab("parts"); renderMatrix(); renderMigration(); renderTable();
+    },
+  });
+}
+
+function renderWaves() {
+  const W = state.insights.waves;
+  const cards = W.map((w) => `<div class="wave">
+      <div class="wave-head"><b>${w.label}</b><span class="muted">${w.when}</span></div>
+      <p class="hint">${esc(w.what)}</p>
+      <div class="wave-num">${fmtM(w.net)}<small> net inventory released</small></div>
+      <div class="wave-sub">${fmtM(w.released)} released · ${fmtM(w.built)} built up · cumulative ${fmtM(w.cumulative)}</div>
+      <div class="wave-sub">${w.n} parts · ${w.changes} program changes · excess ${fmtM(w.excess)}${w.consignment ? ` · consignment ${fmtM(w.consignment)}` : ""}</div>
+      ${w.suppliers.length ? `<div class="wave-sup">${w.suppliers.map((x) => `<span class="chip-static">${esc(x.supplier)} <span class="muted">${fmtM(x.spend)}</span></span>`).join("")}</div>` : ""}
+    </div>`).join("");
+  const rows = W.flatMap((w) => [...w.parts].sort((a, b) => (b.inv_value_current - b.inv_value_target) - (a.inv_value_current - a.inv_value_target)).map((p) => `
+    <tr class="clickable" data-part="${esc(p.part_number)}"><td>${w.label}</td><td class="pn">${esc(p.part_number)}</td><td>${esc(p.supplier)}</td>
+      <td>${badge(p.current_program)}</td><td>${badge(p.recommended_program)}${p.program_change ? "" : ' <span class="tag">keep</span>'}</td>
+      <td class="n">${fmtUSD(p.inv_value_current - p.inv_value_target)}</td><td class="n ${p.excess_value ? "" : "muted"}">${fmtUSD(p.excess_value)}</td></tr>`)).join("");
+  $("#tab-waves").innerHTML = `<p class="hint">Wave 1 needs no supplier agreement. Waves 2 and 3 move VMI/CRP parts supplier by supplier, largest VMI/CRP spend first. Thresholds are in Policy → Director views.</p>
+    <div class="waves">${cards}</div>
+    <div class="table-wrap"><table class="grid"><thead><tr><th>Wave</th><th>Part</th><th>Supplier</th><th>Current</th><th>Recommended</th><th class="n">Inventory released</th><th class="n">Excess $</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderRisk() {
+  const I = state.insights, P = state.policy;
+  const tier = (t) => `<span class="${t === "Critical" ? "issue-block" : "issue-warn"}">${t === "Critical" ? "Below safety" : "Below target"}</span>`;
+  $("#tab-risk").innerHTML = `
+    <h3>Stockout risk</h3>
+    <p class="hint">${I.critical.length} parts below safety stock (build-up ${fmtM(I.criticalBuild)}) and ${I.risk.length - I.critical.length} below target. Bringing all of them to target takes ${fmtM(I.riskBuild)}.</p>
+    <div class="table-wrap"><table class="grid"><thead><tr><th>Status</th><th>Part</th><th>Supplier</th><th>Recommended</th><th class="n">On hand</th><th class="n">Safety stock</th><th class="n">Target</th><th class="n">Weeks of cover</th><th class="n">Build-up $</th></tr></thead><tbody>
+    ${I.risk.map((r) => `<tr class="clickable" data-part="${esc(r.part.part_number)}"><td>${tier(r.tier)}</td><td class="pn">${esc(r.part.part_number)}</td><td>${esc(r.part.supplier)}</td>
+      <td>${badge(r.part.recommended_program)}</td><td class="n">${fmtN(r.part.on_hand_qty)}</td><td class="n">${fmtN(r.safety)}</td><td class="n">${fmtN(r.part.target_qty)}</td>
+      <td class="n">${fmtN(r.weeks_cover, 1)}</td><td class="n">${fmtUSD(r.build_value)}</td></tr>`).join("") || `<tr><td colspan="9" class="muted">No part below target.</td></tr>`}
+    </tbody></table></div>
+    <h3>Excess &amp; obsolescence (E&amp;O) exposure</h3>
+    <p class="hint">Stock beyond ${P.eo_horizon_weeks} weeks at the recent run-rate (last ${P.trend_weeks} weeks), on declining parts or slow movers (over ${P.eo_dos_days} days on hand): ${fmtM(I.eoValue)} across ${I.eo.length} parts.</p>
+    <div class="table-wrap"><table class="grid"><thead><tr><th>Part</th><th>Supplier</th><th>Why</th><th class="n">On hand</th><th class="n">Run-rate / wk</th><th class="n">Needed in ${P.eo_horizon_weeks} wks</th><th class="n">Exposed qty</th><th class="n">Exposure $</th></tr></thead><tbody>
+    ${I.eo.map((e) => `<tr class="clickable" data-part="${esc(e.part.part_number)}"><td class="pn">${esc(e.part.part_number)}</td><td>${esc(e.part.supplier)}</td><td>${esc(e.why)}</td>
+      <td class="n">${fmtN(e.part.on_hand_qty)}</td><td class="n">${fmtN(e.runRate)}</td><td class="n">${fmtN(e.covered)}</td><td class="n">${fmtN(e.excess_qty)}</td><td class="n">${fmtUSD(e.value)}</td></tr>`).join("") || `<tr><td colspan="8" class="muted">No exposure at the current thresholds.</td></tr>`}
+    </tbody></table></div>`;
+}
+
+function renderScenarios() {
+  const cur = scenarioMetrics(state.result, state.insights);
+  const all = [{ name: "Current policy", metrics: cur, changes: describeChanges(state.policy), current: true }, ...state.scenarios];
+  const best = (r) => {
+    if (!r.better || all.length < 2) return -1;
+    const vals = all.map((x) => x.metrics[r.key]);
+    const v = r.better === "low" ? Math.min(...vals) : Math.max(...vals);
+    return vals.filter((x) => x === v).length === vals.length ? -1 : vals.indexOf(v);
+  };
+  const nextName = `Scenario ${String.fromCharCode(65 + state.scenarios.length)}`;
+  $("#tab-scenarios").innerHTML = `
+    <div class="scen-bar">
+      <input type="text" id="scenName" placeholder="${nextName}" aria-label="Scenario name" maxlength="40">
+      <button type="button" class="btn btn-primary" data-scen="save">Save current policy as scenario</button>
+      <span class="hint">Adjust Policy, save, repeat. Scenarios last for this session and appear in the Story view and the deck.</span>
+    </div>
+    <div class="table-wrap"><table class="grid scen"><thead><tr><th>Metric</th>${all.map((x, i) => `<th class="n">${esc(x.name)}${x.current ? "" : `<div class="scen-actions"><button type="button" class="btn btn-ghost" data-scen="apply" data-i="${i - 1}">Apply</button><button type="button" class="btn btn-ghost" data-scen="remove" data-i="${i - 1}">Remove</button></div>`}</th>`).join("")}</tr></thead>
+    <tbody>${SCENARIO_ROWS.map((r) => { const b = best(r); return `<tr><td>${r.label}</td>${all.map((x, i) => `<td class="n ${i === b ? "best" : ""}">${fmtMetric(x.metrics[r.key], r.fmt)}</td>`).join("")}</tr>`; }).join("")}
+      <tr><td>Policy changes vs. default</td>${all.map((x) => `<td class="muted small">${esc(x.changes || "Default policy")}</td>`).join("")}</tr></tbody></table></div>
+    ${state.scenarios.length ? "" : `<p class="hint" style="margin-top:8px">No scenarios saved yet. Try: save the default, then raise z to 2.05 for class A and save again.</p>`}`;
+}
+
+function saveScenario() {
+  const name = ($("#scenName")?.value || "").trim() || `Scenario ${String.fromCharCode(65 + state.scenarios.length)}`;
+  state.scenarios.push({ name, policy: clonePolicy(state.policy), metrics: scenarioMetrics(state.result, state.insights), changes: describeChanges(state.policy) });
+  renderScenarios();
+  if (state.view === "story") drawStory();
+}
+
+function storyKpis() {
+  const S = state.result.summary, C = state.insights.carrying, P = state.policy;
+  const d = S.inv_now ? (S.inv_target - S.inv_now) / S.inv_now : 0;
+  return [
+    { label: "Spend under pull programs", value: `${fmtPct(S.pull_share_now)} → ${fmtPct(S.pull_share_rec)}`, sub: "today vs recommended" },
+    { label: "Inventory", value: `${fmtM(S.inv_now)} → ${fmtM(S.inv_target)}`, sub: `${d <= 0 ? "−" : "+"}${fmtPct(Math.abs(d))} at the recommended policy` },
+    { label: "Excess to right-size", value: fmtM(S.excess), sub: `one-time cash, above target × ${P.tolerance.toFixed(2)}`, accent: "006300" },
+    { label: "Carrying cost avoided", value: `${fmtM(C.avoided)}/yr`, sub: `recurring P&L at ${fmtPct(C.rate)}`, accent: "006300" },
+    { label: "Consignment transfer", value: P.consignment ? fmtM(S.consignment) : "Off", sub: "ownership to suppliers, not a saving", accent: "2A78D6" },
+  ];
+}
+
+async function downloadDeck(btn) {
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = "Building deck…";
+  try {
+    const S = state.result.summary, C = state.insights.carrying;
+    const changed = policyRowsAll().filter((r) => r.changed).length;
+    await exportDeck({
+      storyEl: $("#story"),
+      rerender: drawStory,
+      kpis: storyKpis(),
+      policyRows: policyRowsAll(),
+      meta: {
+        subtitle: `${S.analyzed} of ${S.parts} parts analyzed · ${fmtM(S.annual_spend)} annual spend · ${$("#source").title || "uploaded data"} · ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
+        policyNote: changed ? `Policy: ${changed} parameter${changed === 1 ? "" : "s"} changed from defaults (see appendix)` : "Policy: defaults (see appendix)",
+        summaryHeadline: `Pull coverage goes from ${fmtPct(S.pull_share_now)} to ${fmtPct(S.pull_share_rec)} of spend, inventory from ${fmtM(S.inv_now)} to ${fmtM(S.inv_target)}, avoiding ${fmtM(C.avoided)} a year in carrying cost`,
+        footer: /sample/.test($("#source").title) ? "Synthetic data. Part numbers, manufacturers and suppliers are fictional." : "Pull Program Fit Analyzer",
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    showNotice(esc(err.message || String(err)));
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+
+function downloadPng(id) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const bg = getComputedStyle(document.documentElement).getPropertyValue("--surface").trim() || "#ffffff";
+  const { data } = canvasPng(canvas, bg);
+  const name = (canvas.closest(".story-card")?.dataset.eyebrow || id).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const a = Object.assign(document.createElement("a"), { href: data, download: `${name}.png` });
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function bindDirector() {
+  $("#story").addEventListener("click", (e) => {
+    const act = e.target.closest("[data-act]");
+    if (act?.dataset.act === "deck") downloadDeck(act);
+    if (act?.dataset.act === "present") {
+      const el = $("#story");
+      if (document.fullscreenElement) document.exitFullscreen();
+      else el.requestFullscreen?.().catch(() => {});
+    }
+    const png = e.target.closest("[data-png]");
+    if (png) downloadPng(png.dataset.png);
+  });
+  document.addEventListener("fullscreenchange", () => { if (state.view === "story") drawStory(); });
+  $("#tab-scenarios").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-scen]");
+    if (!b) return;
+    if (b.dataset.scen === "save") saveScenario();
+    if (b.dataset.scen === "apply") { state.policy = clonePolicy(state.scenarios[+b.dataset.i].policy); syncPolicyInputs(); recompute(); }
+    if (b.dataset.scen === "remove") { state.scenarios.splice(+b.dataset.i, 1); renderScenarios(); if (state.view === "story") drawStory(); }
+  });
+  $("#tab-scenarios").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "scenName") saveScenario(); });
+}
+
 bind();
+bindDirector();
 setView(state.view);
 buildPolicyForm();
 loadSample();

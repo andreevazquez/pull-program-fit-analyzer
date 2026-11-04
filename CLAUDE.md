@@ -74,5 +74,17 @@ Write a small test (Node script or in-page dev check) that loads the CSV, runs t
 ## Design direction
 Clean and dense, like an internal ops tool done well. One accent color per program (VMI, CRP, Kanban, MRP) used consistently across the matrix, table badges and charts. No stock imagery, no emojis, no marketing hero. The summary and the matrix should be visible without scrolling on a laptop.
 
+## v1.1 extensions (director views)
+Added on top of v1. They never change the `segment.py` outputs; `test/check.mjs` must still pass unchanged.
+- **Story view** (`js/story.js`): header toggle Analysis | Story, also opened with `#story`. Charts only, each with a headline computed from the data, so it follows the Policy panel live. Bars click through to the part drawer or the supplier filter.
+- **Deck export** (`js/deck.js`): "Download deck (.pptx)" builds one slide per Story card, plus title, summary and a policy appendix. Charts are re-rendered in light theme at 2x for the slides. PptxGenJS 3.12.0 loads from jsdelivr only when the button is clicked. Each card also has a PNG button, and "Present" puts the Story view in fullscreen.
+- **Insights** (`js/insights.js`, checked by `test/insights.mjs`). New policy parameters live under Policy → Director views:
+  - **Carrying cost** = inventory value × `carrying_rate` (default 25%/yr). "Avoided" = max(0, now − target) × rate. This is the recurring P&L number. Keep it separate from excess (one-time cash) and consignment (ownership transfer).
+  - **Stockout risk**: Critical = on hand < safety stock; Watch = safety stock ≤ on hand < target. Build-up = (target − on hand) × cost.
+  - **E&O exposure** = max(0, on hand − last-`trend_weeks` run-rate × `eo_horizon_weeks`) × cost, only for Declining parts or parts above `eo_dos_days` days on hand.
+  - **Rollout waves**: Wave 1 = everything that needs no supplier agreement (Kanban, back to MRP, right-size in place). VMI/CRP program changes go by supplier, ranked by VMI/CRP spend: suppliers whose cumulative share before them is < `wave2_share` go to Wave 2, the rest to Wave 3. `wave_months` sets the timeline labels.
+  - **Scenarios**: save the current policy with its metrics (in memory, this session only), compare side by side, and apply one back. Shown in Analysis → Scenarios, in the Story view and in the deck.
+- **Cache busting**: every module import and the CSS/JS links in `index.html` carry `?v=N`. Bump N everywhere on each deploy, or browsers mix old and new files for ~10 minutes.
+
 ## Out of scope for v1
 Supplier capacity, multi-site, forecast vs actual comparison, freshness/date-code rules (possible v2 tab), login, persistence beyond the session.
