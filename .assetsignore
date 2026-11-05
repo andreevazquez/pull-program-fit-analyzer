@@ -1,0 +1,13 @@
+# Files the Cloudflare deploy must not publish (repo and dev tooling, not the site).
+.git
+.github
+.claude
+.DS_Store
+filesv2
+node_modules
+scripts
+test
+wrangler.jsonc
+.assetsignore
+.gitignore
+.wrangler

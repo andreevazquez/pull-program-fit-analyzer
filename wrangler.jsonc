@@ -1,0 +1,10 @@
+// Cloudflare Workers static assets: serves this folder as a static site (no Worker script).
+// Deployed by Cloudflare Workers Builds on every push to main (deploy command: npx wrangler deploy).
+// GitHub Pages serves the same files; nothing here changes the app.
+{
+  "name": "pull-program-fit-analyzer",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./"
+  }
+}
