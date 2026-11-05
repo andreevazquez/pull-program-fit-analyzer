@@ -2,9 +2,10 @@
 // Port of reference/segment.py. If this file and the Python disagree, the Python wins.
 // Pure functions, no DOM and no dependencies, so the same module runs in the browser and in Node tests.
 
-import { INSIGHT_DEFAULTS } from "./insights.js?v=12";
-import { SALES_DEFAULTS } from "./sales.js?v=12";
-import { FRESHNESS_DEFAULTS } from "./freshness.js?v=12";
+import { INSIGHT_DEFAULTS } from "./insights.js?v=13";
+import { SALES_DEFAULTS } from "./sales.js?v=13";
+import { FRESHNESS_DEFAULTS } from "./freshness.js?v=13";
+import { V2_DEFAULTS } from "./v2.js?v=13";
 
 export const PROGRAMS = ["VMI", "CRP", "Kanban", "MRP"];
 
@@ -23,6 +24,7 @@ export const DEFAULT_POLICY = Object.freeze({
   ...INSIGHT_DEFAULTS,
   ...SALES_DEFAULTS,
   ...FRESHNESS_DEFAULTS,
+  ...V2_DEFAULTS,
 });
 
 export const clonePolicy = (p = DEFAULT_POLICY) => JSON.parse(JSON.stringify(p));

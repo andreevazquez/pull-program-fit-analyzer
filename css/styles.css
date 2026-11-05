@@ -389,3 +389,33 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
   .table-wrap { max-height: none; }
 }
 @media print { .topbar .actions, .policy, .filters { display: none; } }
+
+/* ---------- role layers (Executive / Manager / Planner) ---------- */
+.exec-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.seg-sub button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--accent) inset; }
+.hero.risk { box-shadow: inset 3px 0 0 var(--crit); }
+#execTop { margin-bottom: 0; }
+.exec-link { margin: 6px 0 0; font-size: 13px; }
+.exec-link a { color: var(--accent); font-weight: 600; }
+.grid.vp tr.vp-type th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); background: var(--surface-2); padding-top: 8px; }
+.grid.vp tr.vp-type th.n { text-align: right; color: var(--ink); }
+.vp-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+.vp-dot.t-cash { background: var(--good); }
+.vp-dot.t-pl { background: var(--accent); }
+.vp-dot.t-rec { background: var(--ink-2); }
+.vp-dot.t-own { background: var(--vmi); }
+.vp-dot.t-risk { background: var(--crit); }
+#planner { display: grid; gap: 12px; }
+#planner[hidden] { display: none; }
+.planner-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); margin-bottom: 10px; }
+.planner-filters input[type="search"] { width: 200px; }
+.planner-filters .muted { font-size: 12px; }
+.grid .small { font-size: 11px; margin-top: 2px; font-weight: 400; }
+.grid td.detail { min-width: 280px; max-width: 520px; white-space: normal; }
+.spark { display: inline-flex; align-items: flex-end; gap: 1px; height: 20px; vertical-align: middle; }
+.spark i { display: block; width: 5px; background: var(--ink-2); border-radius: 1px; opacity: 0.55; }
+.spark i.neg { background: var(--crit); opacity: 1; }
+.grid.cov13 td, .grid.cov13 th { padding: 4px 5px; font-size: 11px; }
+.grid.cov13 td.lt-edge { box-shadow: inset -2px 0 0 var(--accent); }
+@media (max-width: 1100px) { .planner-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .planner-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid td.detail { min-width: 220px; } }

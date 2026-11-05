@@ -22,3 +22,5 @@ jobs:
         run: node test/sales.mjs
       - name: Freshness claims (V2_SPEC.md section 2)
         run: node test/freshness.mjs
+      - name: V2 pipeline, scorecard, MOQ & LT, executive roll-up
+        run: node test/v2.mjs

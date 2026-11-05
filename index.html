@@ -25,10 +25,10 @@
   <meta name="twitter:description" content="Pull programs are a portfolio decision. Segment every part, set the policy, and see the inventory, carrying cost and risk it moves.">
   <meta name="twitter:image" content="https://andreevazquez.github.io/pull-program-fit-analyzer/og-image.png">
   <meta name="twitter:image:alt" content="Pull Program Fit Analyzer: an ABC by XYZ matrix colored by recommended program.">
-  <link rel="stylesheet" href="css/styles.css?v=12">
+  <link rel="stylesheet" href="css/styles.css?v=13">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script type="module" src="js/app.js?v=12"></script>
+  <script type="module" src="js/app.js?v=13"></script>
 </head>
 <body>
   <header class="topbar">
@@ -40,19 +40,19 @@
       <p class="tagline">Pull programs are a portfolio decision. The policy is explicit and adjustable.</p>
     </div>
     <div class="actions">
-      <div class="seg" role="group" aria-label="View">
-        <button type="button" data-view="analysis" aria-pressed="true">Analysis</button>
-        <button type="button" data-view="story" aria-pressed="false">Story</button>
-        <button type="button" data-view="sales" aria-pressed="false">Sales</button>
+      <div class="seg" role="group" aria-label="Layer: who is looking">
+        <button type="button" data-view="story" data-layer="exec" aria-pressed="false" title="Director / VP: money, service and the plan">Executive</button>
+        <button type="button" data-view="analysis" data-layer="analysis" aria-pressed="true" title="Supply chain manager: segmentation, policy, suppliers">Manager</button>
+        <button type="button" data-view="planner" data-layer="planner" aria-pressed="false" title="Planner: what to do this week, part by part">Planner</button>
       </div>
       <span class="source" id="source">Loading sample…</span>
-      <label class="btn">
+      <label class="btn" data-layers="analysis planner">
         <input type="file" id="upload" accept=".csv,text/csv" hidden>
         Upload CSV
       </label>
-      <button class="btn btn-ghost" id="formatHelp" type="button" aria-haspopup="dialog">CSV format</button>
-      <button class="btn" id="export" type="button">Export CSV</button>
-      <button class="btn btn-primary" id="policyToggle" type="button" aria-expanded="false" aria-controls="policy">
+      <button class="btn btn-ghost" data-layers="analysis planner" id="formatHelp" type="button" aria-haspopup="dialog">CSV format</button>
+      <button class="btn" data-layers="analysis" id="export" type="button">Export CSV</button>
+      <button class="btn btn-primary" data-layers="analysis" id="policyToggle" type="button" aria-expanded="false" aria-controls="policy">
         Policy <span class="pill" id="policyDiff" hidden></span>
       </button>
     </div>
@@ -62,8 +62,17 @@
     <main id="main">
       <div class="notice" id="notice" hidden></div>
 
+      <div class="exec-bar" id="execBar" hidden>
+        <div class="seg seg-sub" role="group" aria-label="Executive view">
+          <button type="button" data-subview="story" aria-pressed="true">Overview</button>
+          <button type="button" data-subview="sales" aria-pressed="false">Sell-in</button>
+        </div>
+        <p class="hint">For directors and VPs: inventory, service, suppliers and the value pipeline. Follows the manager's Policy.</p>
+      </div>
+      <section class="story" id="execTop" aria-label="Executive scorecard" hidden></section>
       <section class="story" id="story" aria-label="Story" hidden></section>
       <section class="story" id="sales" aria-label="Sales: sell-in vs sell-through" hidden></section>
+      <section id="planner" aria-label="Planner" hidden></section>
 
       <section class="kpis" id="kpis" aria-label="Summary" data-analysis></section>
 
@@ -88,7 +97,9 @@
       <section class="card" data-analysis>
         <div class="tabs" role="tablist">
           <button role="tab" class="tab" id="tabbtn-parts" data-tab="parts" aria-controls="tab-parts" aria-selected="true" tabindex="0">Parts</button>
-          <button role="tab" class="tab" id="tabbtn-suppliers" data-tab="suppliers" aria-controls="tab-suppliers" aria-selected="false" tabindex="-1">Supplier view</button>
+          <button role="tab" class="tab" id="tabbtn-suppliers" data-tab="suppliers" aria-controls="tab-suppliers" aria-selected="false" tabindex="-1">Suppliers</button>
+          <button role="tab" class="tab" id="tabbtn-pipeline" data-tab="pipeline" aria-controls="tab-pipeline" aria-selected="false" tabindex="-1">Pipeline <span class="pill" id="escCount"></span></button>
+          <button role="tab" class="tab" id="tabbtn-opps" data-tab="opps" aria-controls="tab-opps" aria-selected="false" tabindex="-1">MOQ &amp; LT</button>
           <button role="tab" class="tab" id="tabbtn-waves" data-tab="waves" aria-controls="tab-waves" aria-selected="false" tabindex="-1">Rollout waves</button>
           <button role="tab" class="tab" id="tabbtn-risk" data-tab="risk" aria-controls="tab-risk" aria-selected="false" tabindex="-1">Risk</button>
           <button role="tab" class="tab" id="tabbtn-scenarios" data-tab="scenarios" aria-controls="tab-scenarios" aria-selected="false" tabindex="-1">Scenarios</button>
@@ -122,8 +133,11 @@
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-suppliers" id="tab-suppliers" hidden>
           <p class="hint">The negotiation list: suppliers ranked by annual spend recommended for VMI or CRP. Start at the top.</p>
           <div class="table-wrap"><table class="grid" id="supplierTable"></table></div>
+          <div id="scorecard"></div>
         </div>
 
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-pipeline" id="tab-pipeline" hidden></div>
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-opps" id="tab-opps" hidden></div>
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-waves" id="tab-waves" hidden></div>
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-risk" id="tab-risk" hidden></div>
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-scenarios" id="tab-scenarios" hidden></div>

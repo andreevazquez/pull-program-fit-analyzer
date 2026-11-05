@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { analyze, clonePolicy } from "../js/segment.js";
-import { freshness, parseDateCode, isoWeeksInYear, addMonths, parseDate, iso } from "../js/freshness.js?v=12";
+import { freshness, parseDateCode, isoWeeksInYear, addMonths, parseDate, iso } from "../js/freshness.js?v=13";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");

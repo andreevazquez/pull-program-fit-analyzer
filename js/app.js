@@ -1,14 +1,16 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=12";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=12";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=12";
-import { exportDeck, canvasPng } from "./deck.js?v=12";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=12";
-import { sellIn } from "./sales.js?v=12";
-import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=12";
-import { renderSales, destroySales } from "./sales-view.js?v=12";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=13";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=13";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=13";
+import { exportDeck, canvasPng } from "./deck.js?v=13";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=13";
+import { sellIn } from "./sales.js?v=13";
+import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=13";
+import { pipeline, scorecard, opportunities, valuePipeline, executive, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=13";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage } from "./layers.js?v=13";
+import { renderSales, destroySales } from "./sales-view.js?v=13";
 
 /* ---------------- state ---------------- */
-const VIEW_HASH = { "#story": "story", "#sales": "sales" };
+const VIEW_HASH = { "#story": "story", "#exec": "story", "#sales": "sales", "#planner": "planner" };
 const state = {
   rows: [],
   policy: clonePolicy(),
@@ -21,6 +23,7 @@ const state = {
   view: VIEW_HASH[location.hash] || "analysis",
   openPart: null,
   lots: [], suppliersV2: [], lotsLabel: "", suppliersLabel: "", claimStatus: new Map(), openClaim: null,
+  forecast: [], forecastLabel: "", ptab: "actions", pfilters: { search: "", action: "", supplier: "" },
 };
 function emptyFilters() {
   return { search: "", commodity: "", supplier: "", abc: "", current: "", rec: "", superA: false, change: false, issue: false, cell: null, mig: null };
@@ -88,6 +91,13 @@ function recompute() {
     state.insights = insights(state.result, state.policy);
     state.sales = sellIn(state.result, state.policy);
     state.fresh = freshness(state.lots, state.suppliersV2, state.result.parts, state.policy);
+    const P = state.policy, cs = (c) => state.claimStatus.get(c.lot_id) || c.status;
+    state.pipe = pipeline(state.result.parts, state.forecast, P);
+    state.pipeByPart = new Map([...state.pipe.escalate, ...state.pipe.watch, ...state.pipe.covered, ...state.pipe.noLeadTime].map((r) => [r.part.part_number, r]));
+    state.score = scorecard(state.result, state.suppliersV2, state.fresh, P, cs);
+    state.opps = opportunities(state.result, P);
+    state.value = valuePipeline({ result: state.result, insights: state.insights, fresh: state.fresh, pipe: state.pipe, score: state.score, opps: state.opps, P, claimStatus: cs });
+    state.exec = executive({ result: state.result, insights: state.insights, pipe: state.pipe, score: state.score });
     renderAll();
   });
 }
@@ -105,23 +115,33 @@ function renderAll() {
   renderSuppliers();
   renderIntegrity();
   renderFreshness();
+  renderV2Tabs();
   renderWaves();
   renderRisk();
   renderScenarios();
   renderPolicyDiff();
-  if (state.view === "story") drawStory();
+  if (state.view === "story") { drawExecTop(); drawStory(); }
   if (state.view === "sales") drawSales();
+  if (state.view === "planner") drawPlanner();
   if (state.openPart) renderDrawer(state.openPart);
 }
 
 function setView(view) {
   state.view = view;
-  for (const b of document.querySelectorAll("[data-view]")) b.setAttribute("aria-pressed", String(b.dataset.view === view));
+  const layer = view === "story" || view === "sales" ? "exec" : view;
+  for (const b of document.querySelectorAll("[data-layer]")) b.setAttribute("aria-pressed", String(b.dataset.layer === layer));
+  for (const b of document.querySelectorAll("[data-subview]")) b.setAttribute("aria-pressed", String(b.dataset.subview === view));
+  for (const el of document.querySelectorAll("[data-layers]")) el.hidden = !el.dataset.layers.split(" ").includes(layer);
+  if (layer !== "analysis") togglePolicy(false);
+  $("#execBar").hidden = layer !== "exec";
+  $("#execTop").hidden = view !== "story";
   $("#story").hidden = view !== "story";
   $("#sales").hidden = view !== "sales";
+  $("#planner").hidden = view !== "planner";
   for (const el of document.querySelectorAll("[data-analysis]")) el.hidden = view !== "analysis";
-  history.replaceState(null, "", view === "analysis" ? location.pathname + location.search : `#${view}`);
-  if (view === "story" && state.result) drawStory();
+  history.replaceState(null, "", view === "analysis" ? location.pathname + location.search : `#${view === "story" ? "exec" : view}`);
+  if (view === "planner" && state.result) drawPlanner();
+  if (view === "story" && state.result) { drawExecTop(); drawStory(); }
   else destroyStory();
   if (view === "sales" && state.result) drawSales();
   else destroySales();
@@ -398,7 +418,8 @@ const parseCsvText = (text) => Papa.parse(text, { header: true, skipEmptyLines: 
 async function loadV2() {
   const get = async (f) => { const r = await fetch(`data_v2/${f}`, { cache: "no-cache" }); if (!r.ok) throw new Error(r.status); return r.text(); };
   try {
-    const [lots, sup] = await Promise.all([get("inventory_lots.csv"), get("suppliers.csv")]);
+    const [lots, sup, fc] = await Promise.all([get("inventory_lots.csv"), get("suppliers.csv"), get("forecast.csv")]);
+    state.forecast = parseCsvText(fc).data; state.forecastLabel = "forecast.csv (sample)";
     state.lots = parseCsvText(lots).data; state.lotsLabel = "inventory_lots.csv (sample)";
     state.suppliersV2 = parseCsvText(sup).data; state.suppliersLabel = "suppliers.csv (sample)";
   } catch { /* freshness tab explains how to upload */ }
@@ -407,11 +428,13 @@ async function loadV2() {
 
 function loadV2Text(kind, text, label) {
   const { data, meta } = parseCsvText(text);
-  const need = kind === "lots" ? ["lot_id", "part_number", "supplier", "qty", "date_code", "received_date"] : ["supplier", "freshness_rule_months"];
+  const need = kind === "lots" ? ["lot_id", "part_number", "supplier", "qty", "date_code", "received_date"]
+    : kind === "forecast" ? ["part_number", "f01", "open_po_qty", "open_po_due_week"] : ["supplier", "freshness_rule_months"];
   const missing = need.filter((c) => !(meta.fields || []).includes(c));
   if (missing.length) { showNotice(`Couldn't read <b>${esc(label)}</b>: missing column${missing.length === 1 ? "" : "s"} ${esc(missing.join(", "))}.`); return; }
-  showNotice(`Loaded <b>${esc(label)}</b>: ${data.length} ${kind === "lots" ? "lots" : "suppliers"}. The file stays in this browser.`, "ok");
-  if (kind === "lots") { state.lots = data; state.lotsLabel = label; state.claimStatus.clear(); }
+  showNotice(`Loaded <b>${esc(label)}</b>: ${data.length} ${kind === "lots" ? "lots" : kind === "forecast" ? "forecast rows" : "suppliers"}. The file stays in this browser.`, "ok");
+  if (kind === "forecast") { state.forecast = data; state.forecastLabel = label; }
+  else if (kind === "lots") { state.lots = data; state.lotsLabel = label; state.claimStatus.clear(); }
   else { state.suppliersV2 = data; state.suppliersLabel = label; }
   recompute();
 }
@@ -496,9 +519,73 @@ function bindFreshness() {
     }
   });
   el.addEventListener("change", (e) => {
-    if (e.target.dataset.status) { state.claimStatus.set(e.target.dataset.status, e.target.value); renderFreshness(); }
+    if (e.target.dataset.status) { state.claimStatus.set(e.target.dataset.status, e.target.value); recompute(); }
     const kind = e.target.dataset.v2, file = e.target.files?.[0];
     if (kind && file) file.text().then((t) => loadV2Text(kind, t, file.name));
+  });
+}
+
+/* ---------------- layers (v2) ---------------- */
+function renderV2Tabs() {
+  const P = state.policy;
+  $("#tab-pipeline").innerHTML = renderPipelineTab(state.pipe, P);
+  $("#tab-opps").innerHTML = renderOppsTab(state.opps, P);
+  $("#scorecard").innerHTML = renderScorecard(state.score, P);
+  $("#escCount").textContent = state.pipe.escalate.length || "";
+}
+
+function drawExecTop() {
+  if (!state.result) return;
+  $("#execTop").innerHTML = renderExecTop({ E: state.exec, V: state.value, pipe: state.pipe, score: state.score, S: state.result.summary, P: state.policy });
+}
+
+function drawPlanner() {
+  if (!state.result) return;
+  const rows = plannerActions({ result: state.result, insights: state.insights, pipe: state.pipe, fresh: state.fresh });
+  const el = $("#planner"), active = document.activeElement?.dataset?.pf;
+  el.innerHTML = renderPlanner({ rows, pipe: state.pipe, insights: state.insights, fresh: state.fresh, result: state.result, filters: state.pfilters, tab: state.ptab });
+  if (active) { const f = el.querySelector(`[data-pf="${active}"]`); f?.focus(); if (f?.type === "search") f.setSelectionRange(f.value.length, f.value.length); }
+}
+
+function exportEscalations() {
+  const rows = [...state.pipe.escalate, ...state.pipe.watch];
+  if (!rows.length) return;
+  const csv = Papa.unparse({ fields: ESCALATION_COLUMNS, data: rows.map(escalationRow) });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "pipeline_escalations.csv" });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function goTo(target) {
+  const [layer, tab] = target.split(":");
+  if (layer === "planner") { state.ptab = tab || "actions"; setView("planner"); return; }
+  setView("analysis");
+  if (tab) { setTab(tab); $(`#tabbtn-${tab}`)?.scrollIntoView({ block: "center" }); }
+}
+
+function bindLayers() {
+  document.addEventListener("click", (e) => {
+    const g = e.target.closest("[data-goto]");
+    if (g) { e.preventDefault(); goTo(g.dataset.goto === "manager" ? "analysis" : g.dataset.goto.replace(/^manager:/, "analysis:")); return; }
+    const sub = e.target.closest("[data-subview]");
+    if (sub && sub.dataset.subview !== state.view) setView(sub.dataset.subview);
+    if (e.target.closest('[data-export="escalations"]')) exportEscalations();
+  });
+  for (const sel of ["#planner", "#tab-pipeline"]) {
+    $(sel).addEventListener("change", (e) => {
+      const kind = e.target.dataset.v2, file = e.target.files?.[0];
+      if (kind && file) file.text().then((t) => loadV2Text(kind, t, file.name));
+    });
+  }
+  const pl = $("#planner");
+  pl.addEventListener("click", (e) => { const t = e.target.closest("[data-ptab]"); if (t) { state.ptab = t.dataset.ptab; drawPlanner(); } });
+  const pf = (e) => { const k = e.target.dataset.pf; if (!k) return; state.pfilters[k] = e.target.value; drawPlanner(); };
+  pl.addEventListener("input", (e) => { if (e.target.dataset.pf === "search") pf(e); });
+  pl.addEventListener("change", (e) => { if (e.target.dataset.pf && e.target.dataset.pf !== "search") pf(e); });
+  $("#scorecard").addEventListener("click", (e) => {
+    const r = e.target.closest("[data-supplier]");
+    if (r) { state.filters = { ...emptyFilters(), supplier: r.dataset.supplier }; syncFilterInputs(); setTab("parts"); renderMatrix(); renderMigration(); renderTable(); }
   });
 }
 
@@ -598,7 +685,7 @@ function renderDrawer(pn) {
           : "Consignment is off in Policy"}</td><td class="res">${fmtUSD(p.consignment_transfer_value, 2)}</td></tr>` : ""}
       </tbody></table>`;
   }
-  $("#dBody").innerHTML = body;
+  $("#dBody").innerHTML = body + drawerCoverage(state.pipeByPart?.get(p.part_number));
   drawChart(p);
 }
 
@@ -675,6 +762,17 @@ const POLICY_GROUPS = [
   { title: "Freshness claims", fields: [
     { path: "fresh_default_rule_months", label: "Default freshness rule", hint: "months; when the supplier has none", step: 1, min: 1, int: true },
     { path: "fresh_grace_months", label: "Claim only if over the rule by more than", hint: "months at receipt", step: 1, min: 0 },
+  ] },
+  { title: "Pipeline coverage", fields: [
+    { path: "fc_upside", label: "Forecast upside if ÷ history >", step: 0.05, min: 0 },
+    { path: "fc_downside", label: "Forecast downside if ÷ history <", step: 0.05, min: 0 },
+    { path: "fc_hist_weeks", label: "History compared", hint: "last N actual weeks", step: 1, min: 1, max: 26, int: true },
+  ] },
+  { title: "Suppliers and MOQ & LT", fields: [
+    { path: "hub_warn_months", label: "Flag hub contracts ending within", hint: "months", step: 1, min: 0, int: true },
+    { path: "moq_opp_weeks", label: "MOQ opportunity above", hint: "weeks of avg demand", step: 1, min: 0 },
+    { path: "lt_opp_min_weeks", label: "LT opportunity for A parts above", hint: "weeks of lead time", step: 1, min: 0 },
+    { path: "lt_cut_weeks", label: "Lead-time cut to evaluate", hint: "weeks", step: 1, min: 1 },
   ] },
   { title: "Sales view", fields: [
     { path: "destock_weeks", label: "Plant reaches target stock in", hint: "weeks; sets the sell-in dip", step: 1, min: 1, int: true },
@@ -783,7 +881,7 @@ function downloadTemplate() {
 }
 
 /* ---------------- events ---------------- */
-const TABS = ["parts", "suppliers", "waves", "risk", "scenarios", "freshness", "integrity"];
+const TABS = ["parts", "suppliers", "pipeline", "opps", "waves", "risk", "scenarios", "freshness", "integrity"];
 function setTab(tab) {
   state.tab = tab;
   for (const b of document.querySelectorAll(".tab")) { const on = b.dataset.tab === tab; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; }
@@ -849,7 +947,7 @@ function bind() {
     state.sort = state.sort.key === key ? { key, dir: -state.sort.dir } : { key, dir: col.n ? -1 : 1 };
     renderTable();
   });
-  for (const sel of ["#partsTable tbody", "#integrityTable", "#tab-waves", "#tab-risk", "#tab-freshness"]) {
+  for (const sel of ["#partsTable tbody", "#integrityTable", "#tab-waves", "#tab-risk", "#tab-freshness", "#tab-pipeline", "#tab-opps", "#planner"]) {
     $(sel).addEventListener("click", (e) => { const r = e.target.closest("[data-part]"); if (r) openDrawer(r.dataset.part); });
   }
   $("#supplierTable").addEventListener("click", (e) => {
@@ -1077,6 +1175,7 @@ function bindDirector() {
 bind();
 bindDirector();
 bindFreshness();
+bindLayers();
 bindKeyboard();
 setView(state.view);
 buildPolicyForm();

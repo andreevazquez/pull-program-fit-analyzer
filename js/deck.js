@@ -1,6 +1,6 @@
 // Builds a PowerPoint deck from the Story view: one slide per card, charts rendered as images
 // in light theme at 2x, plus title, summary and a policy appendix. PptxGenJS loads on first use.
-import { storyCards } from "./story.js?v=12";
+import { storyCards } from "./story.js?v=13";
 
 const PPTX_SRC = "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
 const FONT = "Arial";
