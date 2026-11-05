@@ -419,3 +419,19 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
 .grid.cov13 td.lt-edge { box-shadow: inset -2px 0 0 var(--accent); }
 @media (max-width: 1100px) { .planner-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .planner-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid td.detail { min-width: 220px; } }
+
+/* Exceptions inbox */
+.sev { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap; }
+.sev::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 5px; vertical-align: 1px; }
+.sev-crit { color: var(--crit); }
+.sev-high { color: var(--warn); }
+.sev-med { color: var(--ink-2); }
+.sev-low { color: var(--muted); border-style: dashed; }
+.grid tr.past-sla td:first-child { box-shadow: inset 3px 0 0 var(--crit); }
+.inbox td { vertical-align: top; }
+.inbox td.detail { min-width: 260px; max-width: 46ch; white-space: normal; }
+.inbox select { max-width: 150px; }
+.small { font-size: 12px; }
+.exc-repeat { align-items: start; }
+.exc-list { margin: 0 0 12px; padding-left: 0; list-style: none; }
+.exc-list li { padding: 6px 0; border-bottom: 1px solid var(--border); }

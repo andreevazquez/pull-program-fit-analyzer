@@ -1,8 +1,8 @@
 // Role layers. Executive: the portfolio in money, service and plan. Planner: what to do this week,
 // part by part. Also the Manager tabs added in v2 (pipeline coverage, supplier scorecard, MOQ & LT).
 // Render functions return HTML strings; js/app.js wires events. No computation beyond presentation.
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=13";
-import { VALUE_TYPES } from "./v2.js?v=13";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=14";
+import { VALUE_TYPES } from "./v2.js?v=14";
 
 const PVAR = { VMI: "--vmi", CRP: "--crp", Kanban: "--kanban", MRP: "--mrp" };
 const badge = (prog) => (prog ? `<span class="badge" style="--c: var(${PVAR[prog] || "--mrp"})">${esc(prog)}</span>` : `<span class="muted">—</span>`);
@@ -16,7 +16,7 @@ const plural = (n, one, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 const TYPE_CLS = { "Cash, one-time": "t-cash", "P&L, per year": "t-pl", Recovery: "t-rec", "Ownership transfer": "t-own", "Risk to manage": "t-risk" };
 
 /* ================= Executive ================= */
-export function renderExecTop({ E, V, pipe, score, S, P }) {
+export function renderExecTop({ E, V, pipe, score, S, P, X }) {
   const typeRows = VALUE_TYPES.map((type) => {
     const lines = V.lines.filter((l) => l.type === type);
     const sub = V.byType.find((t) => t.type === type);
@@ -42,6 +42,7 @@ export function renderExecTop({ E, V, pipe, score, S, P }) {
         <div class="table-wrap story-table"><table class="grid vp"><thead><tr><th>Initiative</th><th>Owner</th><th>When</th><th>Status</th><th class="n">Value</th></tr></thead>
           <tbody>${typeRows}</tbody></table></div>
       </article>
+      ${X ? renderExecExceptions(X) : ""}
       <article class="card story-card">
         <div class="story-card-head"><div class="eyebrow">Will we ship?</div></div>
         <h2 class="headline">${pipe.escalate.length ? `${plural(pipe.escalate.length, "part")} run short inside their lead time; the top 10 carry ${fmtPct(pipe.top10Share)} of the ${fmtM(pipe.escalateValue)} at risk` : "No part runs short inside its lead time"}</h2>
@@ -91,7 +92,7 @@ export function plannerActions({ result, insights, pipe, fresh }) {
   return [...map.values()].sort((a, b) => b.weight - a.weight);
 }
 
-export function renderPlanner({ rows, pipe, insights, fresh, result, filters, tab }) {
+export function renderPlanner({ rows, pipe, insights, fresh, result, filters, tab, X, xfilters, lib }) {
   const count = (k) => rows.filter((r) => r.actions.some((a) => a.key === k)).length;
   const fixes = result.parts.filter((p) => p.issues.length).length + (fresh?.invalid.length || 0);
   const kpis = `<div class="kpis planner-kpis">
@@ -102,7 +103,8 @@ export function renderPlanner({ rows, pipe, insights, fresh, result, filters, ta
     ${kpi("Freshness to validate", fmtN(fresh?.claimable.length || 0), `${fresh?.aging.length || 0} aged lots to use first`)}
     ${kpi("Data to fix", fmtN(fixes), "part master and lot records")}
   </div>`;
-  const tabs = [["actions", "This week"], ["escalations", "Escalations"], ["forecast", "Forecast flags"], ["fixes", "Data fixes"]];
+  const mineCrit = X ? X.open.filter((x) => x.owner === "Planner" && x.sev === 0).length : 0;
+  const tabs = [["actions", "This week"], ["exceptions", `Exceptions${mineCrit ? ` <span class="pill">${mineCrit}</span>` : ""}`], ["escalations", "Escalations"], ["forecast", "Forecast flags"], ["fixes", "Data fixes"]];
   const tabBar = `<div class="tabs" role="tablist" aria-label="Planner">${tabs.map(([k, l]) => `<button role="tab" class="tab" data-ptab="${k}" aria-selected="${tab === k}" tabindex="${tab === k ? 0 : -1}">${l}</button>`).join("")}</div>`;
   let body = "";
   if (tab === "actions") {
@@ -135,6 +137,8 @@ export function renderPlanner({ rows, pipe, insights, fresh, result, filters, ta
       <h3>Place a PO: short after the lead time</h3>
       ${coverageTable(pipe.watch, "Place PO", "No part goes short after its lead time either.", true)}
       ${pipe.noLeadTime.length ? `<p class="hint">${plural(pipe.noLeadTime.length, "part")} without a lead time can't be classified: ${pipe.noLeadTime.map((r) => esc(r.part.part_number)).join(", ")}. Fix the master data first.</p>` : ""}`;
+  } else if (tab === "exceptions") {
+    body = X ? renderPlannerExceptions(X, xfilters, lib) : "";
   } else if (tab === "forecast") {
     body = forecastTable(pipe);
   } else {
@@ -258,4 +262,119 @@ export function drawerCoverage(r) {
       <tr><td>Forecast</td>${r.forecast.map((v) => `<td class="n">${fmtN(v)}</td>`).join("")}</tr>
       <tr><td>Projected</td>${r.proj.map((v, i) => `<td class="n ${v < 0 ? "issue-block" : ""}${r.lt && i + 1 === Math.min(13, Math.ceil(r.lt)) ? " lt-edge" : ""}">${fmtN(v)}</td>`).join("")}</tr>
     </tbody></table></div>`;
+}
+
+/* ================= Exceptions inbox ================= */
+const SEV_CLS = ["sev-crit", "sev-high", "sev-med", "sev-low"];
+const sevTag = (x) => `<span class="sev ${SEV_CLS[x.sev]}">${x.severity}</span>`;
+const impact = (x) => (x.kind && x.value ? `<b>${fmtM(x.value)}</b><div class="muted small">${esc(x.kind)}</div>` : dash);
+const owners = ["Planner", "Manager"];
+
+// filters: { search, sev, cat, owner, status: "open" | "all" | one of STATUSES, supplier }; fixedOwner hides the owner filter.
+export function renderInbox(X, filters, { STATUSES, SEVERITIES, CATEGORIES, resolutionCodes }, fixedOwner = null) {
+  const owner = fixedOwner || filters.owner;
+  const base = X.items.filter((x) => !owner || x.owner === owner);
+  const shown = base.filter((x) => (filters.status === "all" || (filters.status === "open" ? x.open : x.status === filters.status))
+    && (filters.sev === "" || x.severity === filters.sev) && (!filters.cat || x.cat === filters.cat) && (!filters.supplier || x.supplier === filters.supplier)
+    && (!filters.search || `${x.part?.part_number || ""} ${x.part?.description || ""} ${x.supplier} ${x.label} ${x.detail}`.toLowerCase().includes(filters.search.toLowerCase())));
+  const suppliers = [...new Set(base.map((x) => x.supplier).filter(Boolean))].sort();
+  const opt = (v, l, cur) => `<option value="${esc(v)}"${cur === v ? " selected" : ""}>${esc(l)}</option>`;
+  const LIMIT = 150, rows = shown.slice(0, filters.all ? shown.length : LIMIT);
+  return `<div class="filters planner-filters">
+      <input type="search" placeholder="Search part, supplier, text" data-xf="search" value="${esc(filters.search)}" aria-label="Search exceptions">
+      <select data-xf="status" aria-label="Status">${opt("open", "Open + in progress", filters.status)}${STATUSES.map((s) => opt(s, s, filters.status)).join("")}${opt("all", "All statuses", filters.status)}</select>
+      <select data-xf="sev" aria-label="Severity">${opt("", "All severities", filters.sev)}${SEVERITIES.map((s) => opt(s, s, filters.sev)).join("")}</select>
+      <select data-xf="cat" aria-label="Category">${opt("", "All categories", filters.cat)}${CATEGORIES.map((s) => opt(s, s, filters.cat)).join("")}</select>
+      ${fixedOwner ? "" : `<select data-xf="owner" aria-label="Owner">${opt("", "All owners", filters.owner)}${owners.map((s) => opt(s, s, filters.owner)).join("")}</select>`}
+      <select data-xf="supplier" aria-label="Supplier">${opt("", "All suppliers", filters.supplier)}${suppliers.map((s) => opt(s, s, filters.supplier)).join("")}</select>
+      <span class="muted">${shown.length} shown of ${base.length} · most severe first, past SLA first, then by value</span>
+    </div>
+    <div class="table-wrap"><table class="grid inbox"><thead><tr><th>Severity</th><th>Exception</th><th>Part / supplier</th><th class="n">Impact</th><th class="n">Weeks to impact</th>
+      ${fixedOwner ? "" : "<th>Owner</th>"}<th class="n">Age / SLA</th><th>Status</th><th>Resolution</th><th>Detail and next step</th></tr></thead><tbody>
+    ${rows.map((x) => `<tr class="${x.open ? "" : "closed"}${x.pastSla ? " past-sla" : ""}">
+      <td class="nowrap">${sevTag(x)}${x.escalatedTo ? `<div class="issue-block small">Past SLA → ${x.escalatedTo}</div>` : ""}</td>
+      <td>${esc(x.label)}<div class="muted small">${esc(x.cat)} · ${esc(x.source)}</div></td>
+      <td>${x.part ? `<span class="pn clickable" tabindex="0" data-part="${esc(x.part.part_number)}">${esc(x.part.part_number)}</span>` : ""}<div class="muted small">${esc(x.supplier)}</div></td>
+      <td class="n">${impact(x)}</td>
+      <td class="n">${x.wti == null ? dash : x.wti === 0 ? "now" : `wk ${x.wti}`}${x.lt && x.wti != null && ["Supply at risk", "Cash to commit"].includes(x.kind) ? `<div class="muted small">LT ${x.lt}</div>` : ""}</td>
+      ${fixedOwner ? "" : `<td>${x.owner}</td>`}
+      <td class="n nowrap"><span class="${x.pastSla ? "issue-block" : ""}">${x.age} d</span> / ${x.sla} d<div class="muted small">due ${x.due}</div></td>
+      <td>${x.locked ? `<span title="Managed in the Freshness tab">${x.status}</span><div class="muted small">via Freshness</div>`
+        : `<select data-xstatus="${esc(x.id)}" aria-label="Status of ${esc(x.label)} ${esc(x.part?.part_number || x.supplier)}">${STATUSES.map((s) => `<option${s === x.status ? " selected" : ""}>${s}</option>`).join("")}</select>`}</td>
+      <td>${x.locked ? dash : `<select data-xres="${esc(x.id)}" aria-label="Resolution"><option value="">—</option>${resolutionCodes(x.cat).map((c) => `<option${c === x.resolution ? " selected" : ""}>${esc(c)}</option>`).join("")}</select>`}</td>
+      <td class="detail">${esc(x.detail)}${x.note ? `<div class="muted small">${esc(x.note)}</div>` : ""}<div class="small"><b>Next:</b> ${esc(x.action)}</div></td></tr>`).join("")
+      || `<tr><td colspan="${fixedOwner ? 9 : 10}" class="muted">No exception for this filter.</td></tr>`}
+    </tbody></table></div>
+    ${shown.length > rows.length ? `<p class="hint">Showing ${rows.length} of ${shown.length}. <button type="button" class="btn btn-ghost" data-xall>Show all</button></p>` : ""}`;
+}
+
+const sevKpis = (X, list) => {
+  const c = (i) => list.filter((x) => x.sev === i).length;
+  return `${kpi("Critical", fmtN(c(0)), "act today: supply hit now, or inside the lead time and large", c(0) ? "claim" : "")}
+    ${kpi("High", fmtN(c(1)), "inside the lead time, or large impact", c(1) ? "aging" : "")}
+    ${kpi("Medium · Low", `${c(2)} · ${c(3)}`, "impact later, or no money attached")}
+    ${kpi("Past SLA", fmtN(list.filter((x) => x.pastSla).length), "escalated one level up", list.some((x) => x.pastSla) ? "claim" : "")}`;
+};
+
+export function renderExceptionsTab(X, filters, lib, P, eventsLabel) {
+  const ev = X.events;
+  return `<div class="fresh-src"><span class="muted">One queue for everything that broke a rule. Detected from the data already loaded, plus supply events (${esc(eventsLabel || "none loaded")}: ${ev.valid} valid${ev.invalid.length ? `, ${ev.invalid.length} invalid` : ""}${ev.belowThreshold.length ? `, ${ev.belowThreshold.length} below threshold` : ""}). Thresholds and SLAs in Policy → Exceptions. Status is kept for this session only.</span>
+      <label class="btn"><input type="file" accept=".csv,text/csv" data-v2="events" hidden>Upload events CSV</label>
+      <button class="btn" type="button" data-export="exceptions">Export inbox CSV</button></div>
+    <div class="kpis fresh-kpis">${sevKpis(X, X.open)}</div>
+    <h3>Impact of open exceptions</h3>
+    <p class="hint">Each kind is different money, so they are listed side by side and never added: ${X.byKind.filter((k) => k.n).map((k) => `<b>${esc(k.kind)}</b> ${fmtM(k.value)} (${k.n})`).join(" · ")}.</p>
+    <h3>Inbox</h3>
+    ${renderInbox(X, filters, lib)}
+    <h3>Where exceptions repeat</h3>
+    <p class="hint">An exception that comes back every week is not bad luck: the program, the policy or the supplier is wrong. Fix the cause, then resolve with "Policy changed".</p>
+    <div class="row2 exc-repeat">
+      <div class="table-wrap"><table class="grid"><thead><tr><th>Supplier</th><th class="n">Open</th><th class="n">Critical</th><th class="n">Past SLA</th><th class="n">Supply at risk</th><th class="n">Cost increase / yr</th></tr></thead><tbody>
+        ${X.bySupplier.map((g) => `<tr class="clickable" tabindex="0" data-xsupplier="${esc(g.supplier)}"><td>${esc(g.supplier)}</td><td class="n">${g.n}</td><td class="n">${g.critical || dash}</td><td class="n">${g.pastSla || dash}</td><td class="n">${fmtM(g.supplyRisk)}</td><td class="n">${g.costYr ? fmtM(g.costYr) : dash}</td></tr>`).join("") || `<tr><td colspan="6" class="muted">None.</td></tr>`}
+      </tbody></table></div>
+      <div><p class="hint"><b>${plural(X.repeatParts.length, "part")}</b> carry ${P.exc_repeat} or more kinds of exception: review their program and parameters first.</p>
+        <div class="table-wrap"><table class="grid"><thead><tr><th>Part</th><th>Program</th><th>Exceptions</th></tr></thead><tbody>
+        ${X.repeatParts.slice(0, 12).map((g) => `<tr class="clickable" tabindex="0" data-part="${esc(g.part.part_number)}"><td class="pn">${esc(g.part.part_number)}<div class="muted small">${esc(g.part.supplier)}</div></td><td>${g.part.analyzed ? badge(g.part.recommended_program) : `<span class="badge blocked">Blocked</span>`}</td><td class="detail">${[...g.types].map(esc).join(", ")}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">No part repeats.</td></tr>`}
+        </tbody></table></div></div>
+    </div>
+    ${ev.invalid.length || ev.belowThreshold.length ? `<h3>Events not raised</h3>
+    <div class="table-wrap"><table class="grid"><thead><tr><th>Event</th><th>Type</th><th>Part</th><th>Why</th></tr></thead><tbody>
+      ${ev.invalid.map((e) => `<tr><td class="nowrap">${esc(e.row.event_id)}</td><td>${esc(e.row.event_type)}</td><td class="pn">${esc(e.row.part_number)}</td><td class="issue-warn">${esc(e.errors.join("; "))}</td></tr>`).join("")}
+      ${ev.belowThreshold.map((e) => `<tr><td class="nowrap">${esc(e.id)}</td><td>${esc(e.row.event_type)}</td><td class="pn">${esc(e.part.part_number)}</td><td class="muted">${esc(e.why)}: logged, not an exception</td></tr>`).join("")}
+    </tbody></table></div>` : ""}`;
+}
+
+export function renderPlannerExceptions(X, filters, lib) {
+  const mine = X.open.filter((x) => x.owner === "Planner");
+  const up = X.open.filter((x) => x.owner === "Manager");
+  return `<p class="hint">Exceptions the planner owns, with an SLA by severity. Past the SLA they go to the manager; past twice the SLA, to the director. ${plural(up.length, "decision")} (EOL, allocation, tariffs, price, lead time, suppliers) sit with the manager and are not shown here.</p>
+    <div class="kpis fresh-kpis">${sevKpis(X, mine)}</div>
+    ${renderInbox(X, filters, lib, "Planner")}`;
+}
+
+export function renderExecExceptions(X) {
+  const top = X.executive.slice(0, 8);
+  return `<article class="card story-card wide">
+    <div class="story-card-head"><div class="eyebrow">Exceptions</div></div>
+    <h2 class="headline">${X.counts.Critical} critical exceptions open; ${plural(X.executive.length, "item needs", "items need")} a director: past SLA or a critical decision</h2>
+    <p class="hint">Planners and the manager work the rest. Each kind of impact is different money and is not added up.</p>
+    <div class="table-wrap story-table"><table class="grid"><thead><tr><th>Category</th><th class="n">Open</th><th class="n">Critical</th><th class="n">Past SLA</th><th>Impact</th></tr></thead><tbody>
+      ${X.byCat.filter((c) => c.n).map((c) => `<tr><td>${esc(c.cat)}</td><td class="n">${c.n}</td><td class="n">${c.critical || dash}</td><td class="n">${c.pastSla ? `<span class="issue-block">${c.pastSla}</span>` : dash}</td>
+        <td class="small">${c.kinds.map((k) => `${esc(k.kind)} <b>${fmtM(k.value)}</b>`).join(" · ") || dash}</td></tr>`).join("")}
+    </tbody></table></div>
+    <h3>Needs a director</h3>
+    <div class="table-wrap story-table"><table class="grid"><thead><tr><th>Severity</th><th>Exception</th><th>Part / supplier</th><th class="n">Impact</th><th class="n">Age / SLA</th><th>Owner</th></tr></thead><tbody>
+      ${top.map((x) => `<tr class="clickable" tabindex="0" data-goto="manager:exceptions"><td class="nowrap">${sevTag(x)}</td><td>${esc(x.label)}<div class="muted small">${esc(x.detail)}</div></td>
+        <td>${x.part ? esc(x.part.part_number) : ""}<div class="muted small">${esc(x.supplier)}</div></td><td class="n">${impact(x)}</td>
+        <td class="n nowrap"><span class="${x.pastSla ? "issue-block" : ""}">${x.age} d</span> / ${x.sla} d</td><td>${x.owner}</td></tr>`).join("") || `<tr><td colspan="6" class="muted">Nothing needs a director today.</td></tr>`}
+    </tbody></table></div>
+    ${X.executive.length > top.length ? `<p class="hint">Top ${top.length} of ${X.executive.length} by severity and value.</p>` : ""}
+    <p class="exec-link"><a href="#" data-goto="manager:exceptions">Open the exceptions inbox</a></p>
+  </article>`;
+}
+
+// Drawer section: open exceptions for one part.
+export function drawerExceptions(list) {
+  if (!list.length) return "";
+  return `<h3>Open exceptions</h3><ul class="exc-list">${list.map((x) => `<li>${sevTag(x)} <b>${esc(x.label)}</b>${x.value && x.kind ? ` · ${fmtM(x.value)} ${esc(x.kind.toLowerCase())}` : ""}<div class="muted small">${esc(x.detail)} Next: ${esc(x.action)}.</div></li>`).join("")}</ul>`;
 }

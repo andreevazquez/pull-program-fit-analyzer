@@ -1,0 +1,33 @@
+event_id,event_type,part_number,supplier,announced_date,effective_date,value,detail
+EV-001,EOL,FX-MIC-1679,Distribuidor Norte (VMI-capable),2026-09-14,2027-03-26,,Manufacturer end-of-life notice; last ship 2027-09-24
+EV-002,EOL,FX-CRY-1945,Distribuidor Norte (VMI-capable),2026-10-20,2027-01-15,,Oscillator family discontinued; drop-in replacement not announced
+EV-003,EOL,FX-BOA-1581,Franchise Direct,2026-10-02,2026-12-18,,Connector series retired; manufacturer suggests a new series with a different footprint
+EV-004,PCN,FX-POW-1812,Franchise Direct,2026-10-05,2027-01-04,,Die shrink at a new fab site; form/fit/function unchanged per manufacturer; customer requalification required
+EV-005,PCN,FX-MLC-1077,Distribuidor Norte (VMI-capable),2026-10-26,2027-02-01,,Termination material change
+EV-006,Allocation,FX-POW-1784,Distribuidor Norte (VMI-capable),2026-10-12,2026-11-02,70,Manufacturer allocating 70% of open orders through Q1
+EV-007,Allocation,FX-MIC-1707,Distribuidor Pacífico,2026-10-28,2026-11-09,60,Wafer capacity constraint; 60% of open orders confirmed
+EV-008,Allocation,FX-DIS-1847,Distribuidor Pacífico,2026-11-02,2026-11-16,80,MOSFET family on allocation at 80% of last quarter's run-rate
+EV-009,Allocation,FX-POW-1448,Distribuidor Norte (VMI-capable),2026-10-30,2026-11-02,50,Inductor line down for maintenance; half of open orders confirmed
+EV-010,Tariff,FX-POW-1791,Franchise Direct,2026-10-15,2027-01-01,25,Country of origin moved to a site under a 25% duty
+EV-011,Tariff,FX-POW-1756,Broker Bajío,2026-10-15,2027-01-01,25,Same origin change as EV-010; broker passes the duty through
+EV-012,Tariff,FX-MIC-1686,Distribuidor Norte (VMI-capable),2026-10-22,2027-02-01,10,Assembly and test moved to a site under a 10% duty
+EV-013,Tariff,FX-DIS-1910,Broker Bajío,2026-11-01,2027-01-01,7.5,Broker reports a 7.5% duty on the new origin
+EV-014,Price increase,FX-MLC-1189,Broker Bajío,2026-10-08,2027-01-01,12,Broker price increase on MLCC for 2027
+EV-015,Price increase,FX-MLC-1119,Distribuidor Norte (VMI-capable),2026-10-19,2027-01-01,8,Annual price adjustment
+EV-016,Price increase,FX-WIR-1630,Franchise Direct,2026-09-30,2026-12-01,18,Copper and resin surcharge
+EV-017,Price increase,FX-ALU-2001,Distribuidor Norte (VMI-capable),2026-10-27,2027-01-01,15,Aluminum foil cost increase
+EV-018,LT increase,FX-MIC-1728,Distribuidor Pacífico,2026-10-21,2026-11-02,36,Quoted lead time from 24 to 36 weeks
+EV-019,LT increase,FX-BOA-1567,Distribuidor Norte (VMI-capable),2026-10-29,2026-11-09,16,Plating capacity; quoted lead time from 9 to 16 weeks
+EV-020,LT increase,FX-MLC-1084,Franchise Direct,2026-10-23,2026-11-02,14,Quoted lead time from 12 to 14 weeks
+EV-021,LT increase,FX-POW-1798,Distribuidor Pacífico,2026-09-28,2026-10-05,40,Quoted lead time from 27 to 40 weeks
+EV-022,Quality hold,FX-BOA-1504,Distribuidor Norte (VMI-capable),2026-10-30,2026-10-30,40000,Incoming inspection: pin coplanarity out of spec on two lots
+EV-023,Quality hold,FX-MIC-1693,Distribuidor Norte (VMI-capable),2026-11-03,2026-11-03,30000,Wrong firmware revision on one reel lot; 8D requested
+EV-024,Quality hold,FX-WIR-1595,Broker Bajío,2026-10-16,2026-10-16,20000,Suspected counterfeit marking; lot quarantined for lab test
+EV-025,Shipment delay,FX-POW-1812,Franchise Direct,2026-11-03,2026-11-03,3,Open PO slips 3 weeks: vessel rolled at origin port
+EV-026,Shipment delay,FX-WIR-1630,Franchise Direct,2026-10-26,2026-10-26,4,Open PO slips 4 weeks: customs inspection
+EV-027,Shipment delay,FX-BOA-1567,Distribuidor Norte (VMI-capable),2026-11-02,2026-11-02,2,Open PO slips 2 weeks: plating backlog
+EV-028,Shipment delay,FX-POW-1791,Franchise Direct,2026-10-20,2026-10-20,2,Open PO slips 2 weeks: carrier capacity
+EV-029,Shipment delay,FX-THI-1343,Distribuidor Norte (VMI-capable),2026-10-28,2026-10-28,5,Open PO slips 5 weeks: border crossing backlog
+EV-030,EOL,FX-ZZZ-9999,Franchise Direct,2026-10-10,2027-04-30,,Part number not in the parts file
+EV-031,Tariff,FX-MIC-1665,Distribuidor Norte (VMI-capable),2026-10-18,2027-13-01,10,Effective date is not a valid date
+EV-032,Strike,FX-MLC-1014,Distribuidor Norte (VMI-capable),2026-10-25,2026-11-15,,Event type not in the list

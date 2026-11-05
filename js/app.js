@@ -1,13 +1,14 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=13";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=13";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=13";
-import { exportDeck, canvasPng } from "./deck.js?v=13";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=13";
-import { sellIn } from "./sales.js?v=13";
-import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=13";
-import { pipeline, scorecard, opportunities, valuePipeline, executive, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=13";
-import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage } from "./layers.js?v=13";
-import { renderSales, destroySales } from "./sales-view.js?v=13";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=14";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=14";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=14";
+import { exportDeck, canvasPng } from "./deck.js?v=14";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=14";
+import { sellIn } from "./sales.js?v=14";
+import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=14";
+import { pipeline, scorecard, opportunities, valuePipeline, executive, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=14";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions } from "./layers.js?v=14";
+import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=14";
+import { renderSales, destroySales } from "./sales-view.js?v=14";
 
 /* ---------------- state ---------------- */
 const VIEW_HASH = { "#story": "story", "#exec": "story", "#sales": "sales", "#planner": "planner" };
@@ -24,7 +25,10 @@ const state = {
   openPart: null,
   lots: [], suppliersV2: [], lotsLabel: "", suppliersLabel: "", claimStatus: new Map(), openClaim: null,
   forecast: [], forecastLabel: "", ptab: "actions", pfilters: { search: "", action: "", supplier: "" },
+  events: [], eventsLabel: "", excStatus: new Map(), xfilters: emptyXFilters(), pxfilters: emptyXFilters(),
 };
+function emptyXFilters() { return { search: "", status: "open", sev: "", cat: "", owner: "", supplier: "", all: false }; }
+const XLIB = { STATUSES: XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes };
 function emptyFilters() {
   return { search: "", commodity: "", supplier: "", abc: "", current: "", rec: "", superA: false, change: false, issue: false, cell: null, mig: null };
 }
@@ -98,6 +102,7 @@ function recompute() {
     state.opps = opportunities(state.result, P);
     state.value = valuePipeline({ result: state.result, insights: state.insights, fresh: state.fresh, pipe: state.pipe, score: state.score, opps: state.opps, P, claimStatus: cs });
     state.exec = executive({ result: state.result, insights: state.insights, pipe: state.pipe, score: state.score });
+    state.exc = exceptions({ result: state.result, insights: state.insights, pipe: state.pipe, fresh: state.fresh, score: state.score, events: state.events, P, claimStatus: cs, statusOf: (id) => state.excStatus.get(id) });
     renderAll();
   });
 }
@@ -116,6 +121,7 @@ function renderAll() {
   renderIntegrity();
   renderFreshness();
   renderV2Tabs();
+  renderExceptions();
   renderWaves();
   renderRisk();
   renderScenarios();
@@ -423,17 +429,23 @@ async function loadV2() {
     state.lots = parseCsvText(lots).data; state.lotsLabel = "inventory_lots.csv (sample)";
     state.suppliersV2 = parseCsvText(sup).data; state.suppliersLabel = "suppliers.csv (sample)";
   } catch { /* freshness tab explains how to upload */ }
+  try {
+    const r = await fetch("data_v3/supply_events.csv", { cache: "no-cache" });
+    if (r.ok) { state.events = parseCsvText(await r.text()).data; state.eventsLabel = "supply_events.csv (sample)"; }
+  } catch { /* exceptions tab explains how to upload */ }
   if (state.result) recompute();
 }
 
 function loadV2Text(kind, text, label) {
   const { data, meta } = parseCsvText(text);
   const need = kind === "lots" ? ["lot_id", "part_number", "supplier", "qty", "date_code", "received_date"]
-    : kind === "forecast" ? ["part_number", "f01", "open_po_qty", "open_po_due_week"] : ["supplier", "freshness_rule_months"];
+    : kind === "forecast" ? ["part_number", "f01", "open_po_qty", "open_po_due_week"]
+    : kind === "events" ? ["event_id", "event_type", "part_number", "announced_date", "effective_date", "value"] : ["supplier", "freshness_rule_months"];
   const missing = need.filter((c) => !(meta.fields || []).includes(c));
   if (missing.length) { showNotice(`Couldn't read <b>${esc(label)}</b>: missing column${missing.length === 1 ? "" : "s"} ${esc(missing.join(", "))}.`); return; }
-  showNotice(`Loaded <b>${esc(label)}</b>: ${data.length} ${kind === "lots" ? "lots" : kind === "forecast" ? "forecast rows" : "suppliers"}. The file stays in this browser.`, "ok");
-  if (kind === "forecast") { state.forecast = data; state.forecastLabel = label; }
+  showNotice(`Loaded <b>${esc(label)}</b>: ${data.length} ${kind === "lots" ? "lots" : kind === "forecast" ? "forecast rows" : kind === "events" ? "events" : "suppliers"}. The file stays in this browser.`, "ok");
+  if (kind === "events") { state.events = data; state.eventsLabel = label; state.excStatus.clear(); }
+  else if (kind === "forecast") { state.forecast = data; state.forecastLabel = label; }
   else if (kind === "lots") { state.lots = data; state.lotsLabel = label; state.claimStatus.clear(); }
   else { state.suppliersV2 = data; state.suppliersLabel = label; }
   recompute();
@@ -536,14 +548,15 @@ function renderV2Tabs() {
 
 function drawExecTop() {
   if (!state.result) return;
-  $("#execTop").innerHTML = renderExecTop({ E: state.exec, V: state.value, pipe: state.pipe, score: state.score, S: state.result.summary, P: state.policy });
+  $("#execTop").innerHTML = renderExecTop({ E: state.exec, V: state.value, pipe: state.pipe, score: state.score, S: state.result.summary, P: state.policy, X: state.exc });
 }
 
 function drawPlanner() {
   if (!state.result) return;
   const rows = plannerActions({ result: state.result, insights: state.insights, pipe: state.pipe, fresh: state.fresh });
-  const el = $("#planner"), active = document.activeElement?.dataset?.pf;
-  el.innerHTML = renderPlanner({ rows, pipe: state.pipe, insights: state.insights, fresh: state.fresh, result: state.result, filters: state.pfilters, tab: state.ptab });
+  const el = $("#planner"), active = document.activeElement?.dataset?.pf, xactive = document.activeElement?.dataset?.xf;
+  el.innerHTML = renderPlanner({ rows, pipe: state.pipe, insights: state.insights, fresh: state.fresh, result: state.result, filters: state.pfilters, tab: state.ptab, X: state.exc, xfilters: state.pxfilters, lib: XLIB });
+  if (xactive) refocus(el, `[data-xf="${xactive}"]`);
   if (active) { const f = el.querySelector(`[data-pf="${active}"]`); f?.focus(); if (f?.type === "search") f.setSelectionRange(f.value.length, f.value.length); }
 }
 
@@ -555,6 +568,49 @@ function exportEscalations() {
   const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "pipeline_escalations.csv" });
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function refocus(el, sel) { const f = el.querySelector(sel); f?.focus(); if (f?.type === "search") f.setSelectionRange(f.value.length, f.value.length); }
+
+function renderExceptions() {
+  const el = $("#tab-exceptions"), xactive = el.contains(document.activeElement) && document.activeElement.dataset.xf;
+  el.innerHTML = renderExceptionsTab(state.exc, state.xfilters, XLIB, state.policy, state.eventsLabel);
+  if (xactive) refocus(el, `[data-xf="${xactive}"]`);
+  $("#excCount").textContent = state.exc.counts.Critical || "";
+}
+
+function exportExceptions() {
+  if (!state.exc?.items.length) return;
+  const csv = Papa.unparse({ fields: EXCEPTION_COLUMNS, data: state.exc.items.map(exceptionRow) });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "exceptions_inbox.csv" });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Shared by the Manager tab (#tab-exceptions) and the Planner layer (#planner).
+function bindExceptions() {
+  const setStatus = (id, patch) => { state.excStatus.set(id, { ...(state.excStatus.get(id) || {}), ...patch }); recompute(); };
+  for (const [sel, key, redraw] of [["#tab-exceptions", "xfilters", () => renderExceptions()], ["#planner", "pxfilters", () => drawPlanner()]]) {
+    const el = $(sel);
+    el.addEventListener("input", (e) => { if (e.target.dataset.xf === "search") { state[key].search = e.target.value; redraw(); } });
+    el.addEventListener("change", (e) => {
+      const t = e.target;
+      if (t.dataset.xf && t.dataset.xf !== "search") { state[key][t.dataset.xf] = t.value; state[key].all = false; redraw(); }
+      if (t.dataset.xstatus) setStatus(t.dataset.xstatus, { status: t.value });
+      if (t.dataset.xres) setStatus(t.dataset.xres, { resolution: t.value, ...(t.value && !state.excStatus.get(t.dataset.xres)?.status ? { status: "Resolved" } : {}) });
+    });
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("[data-xall]")) { state[key].all = true; redraw(); }
+      const s = e.target.closest("[data-xsupplier]");
+      if (s) { state[key] = { ...emptyXFilters(), supplier: s.dataset.xsupplier }; redraw(); }
+      if (e.target.closest('[data-export="exceptions"]')) exportExceptions();
+    });
+  }
+  $("#tab-exceptions").addEventListener("change", (e) => {
+    const kind = e.target.dataset.v2, file = e.target.files?.[0];
+    if (kind && file) file.text().then((t) => loadV2Text(kind, t, file.name));
+  });
 }
 
 function goTo(target) {
@@ -685,7 +741,7 @@ function renderDrawer(pn) {
           : "Consignment is off in Policy"}</td><td class="res">${fmtUSD(p.consignment_transfer_value, 2)}</td></tr>` : ""}
       </tbody></table>`;
   }
-  $("#dBody").innerHTML = body + drawerCoverage(state.pipeByPart?.get(p.part_number));
+  $("#dBody").innerHTML = body + drawerExceptions(state.exc?.open.filter((x) => x.part?.part_number === p.part_number) || []) + drawerCoverage(state.pipeByPart?.get(p.part_number));
   drawChart(p);
 }
 
@@ -773,6 +829,19 @@ const POLICY_GROUPS = [
     { path: "moq_opp_weeks", label: "MOQ opportunity above", hint: "weeks of avg demand", step: 1, min: 0 },
     { path: "lt_opp_min_weeks", label: "LT opportunity for A parts above", hint: "weeks of lead time", step: 1, min: 0 },
     { path: "lt_cut_weeks", label: "Lead-time cut to evaluate", hint: "weeks", step: 1, min: 1 },
+  ] },
+  { title: "Exceptions", fields: [
+    { path: "exc_now_weeks", label: "Act now if supply is hit within", hint: "weeks", step: 1, min: 0, int: true },
+    { path: "exc_big_value", label: "Large impact from", hint: "USD; raises severity", step: 10000, min: 0 },
+    { path: "exc_lt_jump_weeks", label: "Lead-time increase exception from", hint: "weeks added", step: 1, min: 0 },
+    { path: "exc_price_pct", label: "Price increase exception from", unit: "%", ...pctF },
+    { path: "exc_otd_min", label: "Supplier OTD target", hint: "%; below = exception", step: 1, min: 0, max: 100 },
+    { path: "exc_ltb_weeks", label: "Last-time buy covers", hint: "weeks of demand", step: 1, min: 0, int: true },
+    { path: "exc_repeat", label: "Review a part's program from", hint: "kinds of exception", step: 1, min: 2, int: true },
+    { path: "sla_critical_days", label: "SLA Critical", hint: "days", step: 1, min: 0, int: true },
+    { path: "sla_high_days", label: "SLA High", hint: "days", step: 1, min: 0, int: true },
+    { path: "sla_medium_days", label: "SLA Medium", hint: "days", step: 1, min: 0, int: true },
+    { path: "sla_low_days", label: "SLA Low", hint: "days", step: 1, min: 0, int: true },
   ] },
   { title: "Sales view", fields: [
     { path: "destock_weeks", label: "Plant reaches target stock in", hint: "weeks; sets the sell-in dip", step: 1, min: 1, int: true },
@@ -881,7 +950,7 @@ function downloadTemplate() {
 }
 
 /* ---------------- events ---------------- */
-const TABS = ["parts", "suppliers", "pipeline", "opps", "waves", "risk", "scenarios", "freshness", "integrity"];
+const TABS = ["parts", "exceptions", "suppliers", "pipeline", "opps", "waves", "risk", "scenarios", "freshness", "integrity"];
 function setTab(tab) {
   state.tab = tab;
   for (const b of document.querySelectorAll(".tab")) { const on = b.dataset.tab === tab; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; }
@@ -947,7 +1016,7 @@ function bind() {
     state.sort = state.sort.key === key ? { key, dir: -state.sort.dir } : { key, dir: col.n ? -1 : 1 };
     renderTable();
   });
-  for (const sel of ["#partsTable tbody", "#integrityTable", "#tab-waves", "#tab-risk", "#tab-freshness", "#tab-pipeline", "#tab-opps", "#planner"]) {
+  for (const sel of ["#partsTable tbody", "#integrityTable", "#tab-waves", "#tab-risk", "#tab-freshness", "#tab-pipeline", "#tab-opps", "#planner", "#tab-exceptions"]) {
     $(sel).addEventListener("click", (e) => { const r = e.target.closest("[data-part]"); if (r) openDrawer(r.dataset.part); });
   }
   $("#supplierTable").addEventListener("click", (e) => {
@@ -1126,7 +1195,7 @@ function downloadPng(id) {
 function bindKeyboard() {
   // Enter/Space activate clickable rows and sortable headers, like buttons.
   document.addEventListener("keydown", (e) => {
-    if ((e.key === "Enter" || e.key === " ") && e.target.matches?.("tr.clickable, th.sortable")) { e.preventDefault(); e.target.click(); }
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches?.("tr.clickable, th.sortable, .pn.clickable")) { e.preventDefault(); e.target.click(); }
   });
   // Arrow keys move between tabs (WAI-ARIA tabs pattern).
   document.querySelector(".tabs").addEventListener("keydown", (e) => {
@@ -1176,8 +1245,10 @@ bind();
 bindDirector();
 bindFreshness();
 bindLayers();
+bindExceptions();
 bindKeyboard();
 setView(state.view);
+window.addEventListener("hashchange", () => { const v = VIEW_HASH[location.hash] || "analysis"; if (v !== state.view) setView(v); });
 buildPolicyForm();
 loadSample();
 loadV2();

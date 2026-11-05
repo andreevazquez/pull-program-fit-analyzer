@@ -24,3 +24,5 @@ jobs:
         run: node test/freshness.mjs
       - name: V2 pipeline, scorecard, MOQ & LT, executive roll-up
         run: node test/v2.mjs
+      - name: Exceptions inbox (data_v3/V3_SPEC.md)
+        run: node test/exceptions.mjs

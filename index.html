@@ -25,10 +25,10 @@
   <meta name="twitter:description" content="Pull programs are a portfolio decision. Segment every part, set the policy, and see the inventory, carrying cost and risk it moves.">
   <meta name="twitter:image" content="https://andreevazquez.github.io/pull-program-fit-analyzer/og-image.png">
   <meta name="twitter:image:alt" content="Pull Program Fit Analyzer: an ABC by XYZ matrix colored by recommended program.">
-  <link rel="stylesheet" href="css/styles.css?v=13">
+  <link rel="stylesheet" href="css/styles.css?v=14">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script type="module" src="js/app.js?v=13"></script>
+  <script type="module" src="js/app.js?v=14"></script>
 </head>
 <body>
   <header class="topbar">
@@ -97,6 +97,7 @@
       <section class="card" data-analysis>
         <div class="tabs" role="tablist">
           <button role="tab" class="tab" id="tabbtn-parts" data-tab="parts" aria-controls="tab-parts" aria-selected="true" tabindex="0">Parts</button>
+          <button role="tab" class="tab" id="tabbtn-exceptions" data-tab="exceptions" aria-controls="tab-exceptions" aria-selected="false" tabindex="-1">Exceptions <span class="pill" id="excCount"></span></button>
           <button role="tab" class="tab" id="tabbtn-suppliers" data-tab="suppliers" aria-controls="tab-suppliers" aria-selected="false" tabindex="-1">Suppliers</button>
           <button role="tab" class="tab" id="tabbtn-pipeline" data-tab="pipeline" aria-controls="tab-pipeline" aria-selected="false" tabindex="-1">Pipeline <span class="pill" id="escCount"></span></button>
           <button role="tab" class="tab" id="tabbtn-opps" data-tab="opps" aria-controls="tab-opps" aria-selected="false" tabindex="-1">MOQ &amp; LT</button>
@@ -136,6 +137,7 @@
           <div id="scorecard"></div>
         </div>
 
+        <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-exceptions" id="tab-exceptions" hidden></div>
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-pipeline" id="tab-pipeline" hidden></div>
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-opps" id="tab-opps" hidden></div>
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-waves" id="tab-waves" hidden></div>
