@@ -1,8 +1,8 @@
 // Role layers. Executive: the portfolio in money, service and plan. Planner: what to do this week,
 // part by part. Also the Manager tabs added in v2 (pipeline coverage, supplier scorecard, MOQ & LT).
 // Render functions return HTML strings; js/app.js wires events. No computation beyond presentation.
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=14";
-import { VALUE_TYPES } from "./v2.js?v=14";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=15";
+import { VALUE_TYPES } from "./v2.js?v=15";
 
 const PVAR = { VMI: "--vmi", CRP: "--crp", Kanban: "--kanban", MRP: "--mrp" };
 const badge = (prog) => (prog ? `<span class="badge" style="--c: var(${PVAR[prog] || "--mrp"})">${esc(prog)}</span>` : `<span class="muted">—</span>`);

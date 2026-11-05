@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { analyze, clonePolicy } from "../js/segment.js";
-import { sellIn, projectPart } from "../js/sales.js?v=14";
+import { sellIn, projectPart } from "../js/sales.js?v=15";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");

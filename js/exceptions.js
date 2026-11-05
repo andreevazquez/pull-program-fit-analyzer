@@ -5,9 +5,9 @@
 //             quality hold, shipment delay). Spec: data_v3/V3_SPEC.md.
 // Every item has impact $ (with its value kind), weeks to impact, severity, owner, SLA and status.
 // Value kinds are different money and are never added into one total.
-import { ANALYSIS_DATE, parseDate } from "./freshness.js?v=14";
-import { projectCoverage } from "./v2.js?v=14";
-import { fmtM } from "./format.js?v=14";
+import { ANALYSIS_DATE, parseDate } from "./freshness.js?v=15";
+import { projectCoverage } from "./v2.js?v=15";
+import { fmtM } from "./format.js?v=15";
 
 export const EXC_DEFAULTS = Object.freeze({
   exc_now_weeks: 2,         // supply impact within this many weeks = act now

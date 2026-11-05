@@ -1,6 +1,6 @@
 // V2_SPEC.md sections 1, 3 and 4, plus the executive roll-up (turns, DIO, value pipeline).
 // Pure functions, no DOM. Built on analyze() results; never changes them.
-import { ANALYSIS_DATE, parseDate, addMonths } from "./freshness.js?v=14";
+import { ANALYSIS_DATE, parseDate, addMonths } from "./freshness.js?v=15";
 
 export const V2_DEFAULTS = Object.freeze({
   fc_upside: 1.5,          // forecast flag: avg(f01..f13) ÷ avg(last N actual weeks) above this = upside

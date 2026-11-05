@@ -1,7 +1,7 @@
 // Sales view: the same parts from the supplier's side. Charts only, one takeaway each,
 // headlines computed from sellIn() so they follow the Policy panel live.
-import { theme, legend, axisCat, axisVal, money, opts } from "./story.js?v=14";
-import { esc, fmtM, fmtPct, plain } from "./format.js?v=14";
+import { theme, legend, axisCat, axisVal, money, opts } from "./story.js?v=15";
+import { esc, fmtM, fmtPct, plain } from "./format.js?v=15";
 
 const charts = new Map();
 const pct = fmtPct;

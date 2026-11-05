@@ -1,8 +1,8 @@
 // Story view: charts only, one takeaway per chart, for steering meetings.
 // Every headline is computed from the current result, so it follows the Policy panel.
-import { PROGRAMS } from "./segment.js?v=14";
-import { SCENARIO_ROWS } from "./insights.js?v=14";
-import { esc, fmtM, fmtPct, plain } from "./format.js?v=14";
+import { PROGRAMS } from "./segment.js?v=15";
+import { SCENARIO_ROWS } from "./insights.js?v=15";
+import { esc, fmtM, fmtPct, plain } from "./format.js?v=15";
 
 const charts = new Map();
 

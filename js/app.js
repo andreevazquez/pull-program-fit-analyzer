@@ -1,14 +1,14 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=14";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=14";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=14";
-import { exportDeck, canvasPng } from "./deck.js?v=14";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=14";
-import { sellIn } from "./sales.js?v=14";
-import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=14";
-import { pipeline, scorecard, opportunities, valuePipeline, executive, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=14";
-import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions } from "./layers.js?v=14";
-import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=14";
-import { renderSales, destroySales } from "./sales-view.js?v=14";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=15";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=15";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=15";
+import { exportDeck, canvasPng } from "./deck.js?v=15";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=15";
+import { sellIn } from "./sales.js?v=15";
+import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=15";
+import { pipeline, scorecard, opportunities, valuePipeline, executive, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=15";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions } from "./layers.js?v=15";
+import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=15";
+import { renderSales, destroySales } from "./sales-view.js?v=15";
 
 /* ---------------- state ---------------- */
 const VIEW_HASH = { "#story": "story", "#exec": "story", "#sales": "sales", "#planner": "planner" };
