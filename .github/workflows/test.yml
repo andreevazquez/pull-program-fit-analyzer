@@ -12,17 +12,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Policy engine unit tests (classification and sizing)
+        run: node test/policy.mjs
       - name: Logic matches reference/expected_results.csv
         run: node test/check.mjs
       - name: Director-view invariants
         run: node test/insights.mjs
       - name: Spreadsheet edge cases
         run: node test/robustness.mjs
-      - name: Sales view (sell-in = sell-through ± stock change)
+      - name: Supplier impact view (sell-in = sell-through ± stock change)
         run: node test/sales.mjs
       - name: Freshness claims (V2_SPEC.md section 2)
         run: node test/freshness.mjs
       - name: V2 pipeline, scorecard, MOQ & LT, executive roll-up
         run: node test/v2.mjs
-      - name: Exceptions inbox (data_v3/V3_SPEC.md)
+      - name: Exceptions inbox (docs/specs/V3_SPEC.md)
         run: node test/exceptions.mjs
