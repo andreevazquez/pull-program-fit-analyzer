@@ -1,6 +1,8 @@
 # Pull Program Fit Analyzer
 
-**Live demo: [andreevazquez.github.io/pull-program-fit-analyzer](https://andreevazquez.github.io/pull-program-fit-analyzer/)**
+**English** · [Español](README.es.md)
+
+**Live demo: [andreevazquez.github.io/pull-program-fit-analyzer](https://andreevazquez.github.io/pull-program-fit-analyzer/)** · [en español](https://andreevazquez.github.io/pull-program-fit-analyzer/?lang=es)
 
 Pull programs are a portfolio decision. This tool makes the purchasing policy explicit and adjustable.
 
@@ -58,7 +60,7 @@ When a part is short in the pipeline and in excess at the same time, the detail 
 
 ## How the policy works
 
-Full rules, formulas and code locations: **[docs/METHODOLOGY.md](docs/METHODOLOGY.md)**.
+Full rules, formulas and code locations: **[docs/METHODOLOGY.md](docs/METHODOLOGY.md)** ([en español](docs/METHODOLOGY.es.md)). Terms: [docs/GLOSSARY.md](docs/GLOSSARY.md).
 
 **1. Classify.**
 - ABC by cumulative share of annual spend: A < 80%, B < 95%. Super A is < 50%.
@@ -85,9 +87,17 @@ Full rules, formulas and code locations: **[docs/METHODOLOGY.md](docs/METHODOLOG
 - Consignment transfer for VMI parts.
 - Carrying cost at 25% a year.
 
+## Languages
+
+The UI is in English and Mexican Spanish. The language comes from `?lang=en` or `?lang=es` in the URL, then the last choice saved in this browser, then the browser language, else English. The EN | ES toggle in the header switches without a reload.
+
+- Dictionaries: `js/i18n/en.js` and `js/i18n/es.js` (the Spanish one loads only when needed). `js/i18n.js` holds `t()`, plurals, and the `Intl` formatters (`en-US` / `es-MX`).
+- The engine (`js/segment.js`, `js/v2.js`, …) stays in English, so tests and CSV exports are the same in both languages; its sentences are translated at display time.
+- Spanish is Mexican business Spanish; supply chain terms used in English on the plant floor stay in English. See the [glossary](docs/GLOSSARY.md).
+
 ## Input format
 
-One row per purchased part. A 150-part sample loads on open; upload your own CSV in the same format.
+One row per purchased part. A 150-part sample loads on open; upload your own CSV in the same format (`.csv` only, up to 10 MB).
 
 | Column | Type | Notes |
 |---|---|---|
@@ -122,7 +132,7 @@ No build step and no dependencies to install. Serve the folder over HTTP, becaus
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000. To run the tests (Node 18 or later):
+Then open http://localhost:8000. To run the tests (Node 18 or later; `test/browser.mjs` also needs Chrome or Chromium):
 
 ```bash
 for t in test/*.mjs; do [ "$t" = test/csv.mjs ] || node "$t" || break; done
@@ -134,6 +144,8 @@ for t in test/*.mjs; do [ "$t" = test/csv.mjs ] || node "$t" || break; done
 | `test/check.mjs` | The JS reproduces `reference/expected_results.csv` from the Python reference (`reference/segment.py`) |
 | `test/insights.mjs`, `test/v2.mjs` | Director views, pipeline coverage, scorecard, cash bridge |
 | `test/freshness.mjs`, `test/exceptions.mjs`, `test/sales.mjs`, `test/robustness.mjs` | Freshness claims, exceptions inbox, sell-in identity, spreadsheet edge cases |
+| `test/i18n.mjs` | EN/ES key, plural and placeholder parity; every key used in the code exists; every engine sentence has a Spanish template; glossary terms stay in English |
+| `test/browser.mjs` | Headless Chrome under the site's CSP: CSVs with `<script>` and HTML in every field, malformed files, a 5,000-part upload with timings, Spanish at 390 px, deck export, no console errors |
 
 GitHub Actions runs all of them on every push. `node scripts/release.mjs` runs them, then bumps the cache-busting version before a deploy.
 
@@ -146,11 +158,18 @@ reference/                Python reference implementation and expected results
 test/, scripts/           tests and the release script
 ```
 
+## Security
+
+- Every value from an uploaded CSV is untrusted and escaped before display. `test/browser.mjs` uploads files with `<script>`, `<img onerror>` and attribute-breaking HTML in every text field and checks that none of it becomes DOM.
+- Uploads: `.csv` only, up to 10 MB. Empty, binary, header-only or column-missing files get a clear message and the page keeps working.
+- `_headers` sets Content-Security-Policy, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` and `X-Frame-Options` on Cloudflare. GitHub Pages can't send headers, so `index.html` carries the same CSP and referrer policy as `<meta>` tags.
+- CDN libraries are pinned and loaded with Subresource Integrity.
+
 ## Data and privacy
 
 **Synthetic data.** Part numbers, manufacturers and suppliers are fictional.
 
-Everything runs in your browser. An uploaded file never leaves the page, and nothing is stored after the tab closes. The only other request is Cloudflare Web Analytics, which counts anonymous page views with no cookies and never sees your data.
+Everything runs in your browser. An uploaded file never leaves the page, and nothing is stored after the tab closes except the language choice. The only other request is Cloudflare Web Analytics, which counts anonymous page views with no cookies and never sees your data.
 
 ## Author
 
