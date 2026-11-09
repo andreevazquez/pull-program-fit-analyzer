@@ -17,7 +17,7 @@ P = dict(  # policy parameters (defaults; editable in the app)
 )
 
 here = os.path.dirname(os.path.abspath(__file__))
-df = pd.read_csv(os.path.join(here, "..", "sample_parts.csv"))
+df = pd.read_csv(os.path.join(here, "..", "data", "sample_parts.csv"))
 wk = [c for c in df.columns if c[0] == "w" and c[1:].isdigit()]
 D = df[wk].astype(float)
 df["avg_weekly"] = D.mean(axis=1)

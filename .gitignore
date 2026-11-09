@@ -1,4 +1,12 @@
-.claude/
+# OS and editor
 .DS_Store
-filesv2/
+.claude/
+
+# Local tooling
+node_modules/
 .wrangler/
+__pycache__/
+*.log
+
+# User drop folder for new data (not part of the app)
+filesv2/
