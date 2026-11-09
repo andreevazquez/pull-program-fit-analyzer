@@ -1,12 +1,12 @@
 // Story view: charts only, one takeaway per chart, for steering meetings.
 // Every headline is computed from the current result, so it follows the Policy panel.
-import { PROGRAMS } from "./segment.js?v=18";
-import { SCENARIO_ROWS } from "./insights.js?v=18";
-import { esc, fmtM, fmtPct, plain } from "./format.js?v=18";
+import { PROGRAMS } from "./segment.js?v=19";
+import { SCENARIO_ROWS } from "./insights.js?v=19";
+import { esc, fmtM, fmtPct, fmtN, plain } from "./format.js?v=19";
+import { t as tr, tx } from "./i18n.js?v=19";
 
 const charts = new Map();
 
-const nf0 = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const pct = fmtPct;
 const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
 const median = (a) => {
@@ -15,7 +15,7 @@ const median = (a) => {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
 const PVAR = { VMI: "--vmi", CRP: "--crp", Kanban: "--kanban", MRP: "--mrp" };
-export const fmtMetric = (v, f) => (f === "pct" ? pct(v) : f === "int" ? nf0.format(v) : fmtM(v));
+export const fmtMetric = (v, f) => (f === "pct" ? pct(v) : f === "int" ? fmtN(v) : fmtM(v));
 
 function theme() {
   const css = getComputedStyle(document.documentElement);
@@ -80,7 +80,7 @@ export function renderStory(container, result, P, ins, ctx = {}) {
   const S = result.summary, s = result.analyzed;
   if (!s.length) {
     destroyStory();
-    container.innerHTML = `<div class="card"><p class="hint">Load a CSV to see the story.</p></div>`;
+    container.innerHTML = `<div class="card"><p class="hint">${tr("st.empty")}</p></div>`;
     return;
   }
   const t = theme();
@@ -136,86 +136,83 @@ export function renderStory(container, result, P, ins, ctx = {}) {
   const card = (eyebrow, headline, sub, id, { wide = false, body = "" } = {}) => `
     <article class="card story-card ${wide ? "wide" : ""}" data-eyebrow="${esc(eyebrow)}" ${id ? `data-chart="${id}"` : ""}>
       <div class="story-card-head"><div class="eyebrow">${++n} · ${esc(eyebrow)}</div>
-        ${id ? `<button type="button" class="btn btn-ghost png" data-png="${id}" title="Download this chart as PNG">PNG</button>` : ""}</div>
+        ${id ? `<button type="button" class="btn btn-ghost png" data-png="${id}" title="${tr("st.pngTitle")}">PNG</button>` : ""}</div>
       <h2 class="headline">${headline}</h2>
       <p class="hint">${sub}</p>
       ${id ? `<div class="story-chart"><canvas id="${id}" role="img" aria-label="${esc(plain(headline))}"></canvas></div>` : body}
     </article>`;
 
-  const consignSub = P.consignment
-    ? `If VMI runs on consignment, ${fmtM(S.consignment)} of stock moves to supplier ownership. That is a working-capital transfer, not a saving, so it is kept apart from excess.`
-    : "Consignment is off in Policy, so no ownership transfer is assumed.";
+  const consignSub = P.consignment ? tr("st.consignOn", { v: fmtM(S.consignment) }) : tr("st.consignOff");
 
   const scen = ctx.scenarios || [];
+  const dflt = tr("scen.defaultPolicy");
   const scenarioTable = scen.length ? `<div class="table-wrap story-table"><table class="grid">
-      <thead><tr><th>Metric</th><th class="n">Current policy</th>${scen.map((x) => `<th class="n">${esc(x.name)}</th>`).join("")}</tr></thead>
-      <tbody>${SCENARIO_ROWS.map((r) => `<tr><td>${r.label}</td><td class="n"><b>${fmtMetric(ctx.current[r.key], r.fmt)}</b></td>${scen.map((x) => `<td class="n">${fmtMetric(x.metrics[r.key], r.fmt)}</td>`).join("")}</tr>`).join("")}
-      <tr><td>Policy changes vs. default</td><td class="muted">${esc(ctx.currentChanges || "Default policy")}</td>${scen.map((x) => `<td class="muted">${esc(x.changes || "Default policy")}</td>`).join("")}</tr>
+      <thead><tr><th>${tr("scen.metric")}</th><th class="n">${tr("scen.current")}</th>${scen.map((x) => `<th class="n">${esc(x.name)}</th>`).join("")}</tr></thead>
+      <tbody>${SCENARIO_ROWS.map((r) => `<tr><td>${tr(`scenRow.${r.key}`)}</td><td class="n"><b>${fmtMetric(ctx.current[r.key], r.fmt)}</b></td>${scen.map((x) => `<td class="n">${fmtMetric(x.metrics[r.key], r.fmt)}</td>`).join("")}</tr>`).join("")}
+      <tr><td>${tr("scen.changes")}</td><td class="muted">${esc(ctx.currentChanges || dflt)}</td>${scen.map((x) => `<td class="muted">${esc(x.changes || dflt)}</td>`).join("")}</tr>
       </tbody></table></div>` : "";
 
   const wave1 = W[0];
   const totalNet = W[2].cumulative;
   const wave2Names = W[1].suppliers.map((x) => x.supplier);
+  const tol = fmtN(P.tolerance, 2);
+  const watchCount = { n: watchN };
 
   container.innerHTML = `
     <div class="story-toolbar">
-      <p class="hint">Live: every chart follows the current policy. Click a bar to drill into the parts behind it.</p>
+      <p class="hint">${tr("st.live")}</p>
       <div class="story-actions">
-        <button type="button" class="btn" data-act="present">Present</button>
-        <button type="button" class="btn btn-primary" data-act="deck">Download deck (.pptx)</button>
+        <button type="button" class="btn" data-act="present">${tr("st.present")}</button>
+        <button type="button" class="btn btn-primary" data-act="deck">${tr("st.deck")}</button>
       </div>
     </div>
     <div class="story-hero">
-      ${hero("Spend under pull programs", `${pct(S.pull_share_now)}<span class="arrow">→</span>${pct(S.pull_share_rec)}`, "today vs recommended")}
-      ${hero("Inventory", `${fmtM(S.inv_now)}<span class="arrow">→</span>${fmtM(S.inv_target)}`, `${sign(invDelta)}${pct(Math.abs(invDelta))} at the recommended policy`)}
-      ${hero("Excess (gross)", fmtM(S.excess), `above target × ${P.tolerance.toFixed(2)}; net of build-ups ${fmtM(S.inv_now - S.inv_target)}`, "excess")}
-      ${hero("Carrying cost avoided", `${fmtM(C.avoided)}<span class="unit">/yr</span>`, `P&L, at ${pct(C.rate)} carrying rate`, "excess")}
-      ${hero("Consignment transfer", P.consignment ? fmtM(S.consignment) : "Off", "ownership moves to suppliers, not a saving", "consign")}
+      ${hero(tr("st.hPull"), `${pct(S.pull_share_now)}<span class="arrow">→</span>${pct(S.pull_share_rec)}`, tr("story.todayVsRec"))}
+      ${hero(tr("story.inventory"), `${fmtM(S.inv_now)}<span class="arrow">→</span>${fmtM(S.inv_target)}`, tr("story.invSub", { d: `${sign(invDelta)}${pct(Math.abs(invDelta))}` }))}
+      ${hero(tr("st.hExcess"), fmtM(S.excess), tr("story.excessSub", { tol, net: fmtM(S.inv_now - S.inv_target) }), "excess")}
+      ${hero(tr("kpi.carry"), `${fmtM(C.avoided)}<span class="unit">${tr("unit.perYr")}</span>`, tr("st.hCarrySub", { r: pct(C.rate) }), "excess")}
+      ${hero(tr("kpi.consign"), P.consignment ? fmtM(S.consignment) : tr("common.off"), tr("st.hConsignSub"), "consign")}
     </div>
     <div class="story-grid">
-      ${card("Where the money is",
-        `${nA} parts, ${pct(nA / N)} of the portfolio, carry ${pct(shareA)} of annual spend`,
-        `${S.super_a} Super A parts alone carry ${pct(shareSA)}. That is where VMI and CRP pay back the effort; the long tail is better served by a two-bin Kanban.`,
+      ${card(tr("st.e1"),
+        tr("st.h1", { n: nA, p: pct(nA / N), s: pct(shareA) }),
+        tr("st.s1", { n: S.super_a, p: pct(shareSA) }),
         "stPareto")}
-      ${card("How we buy today vs. recommended",
-        `Pull programs cover ${pct(S.pull_share_now)} of spend today; the policy puts ${pct(S.pull_share_rec)} under pull`,
-        `${S.program_changes} of ${N} parts change program: ${fromMrp} leave MRP for a pull program, and ${toMrp} go back to MRP because demand is ramping, declining or erratic.`,
+      ${card(tr("st.e2"),
+        tr("st.h2", { now: pct(S.pull_share_now), rec: pct(S.pull_share_rec) }),
+        tr("st.s2", { c: S.program_changes, n: N, from: fromMrp, to: toMrp }),
         "stMix")}
-      ${card("What it does to inventory",
-        `Inventory ${invDelta <= 0 ? "falls" : "rises"} from ${fmtM(S.inv_now)} to ${fmtM(S.inv_target)} (${sign(invDelta)}${pct(Math.abs(invDelta))})`,
-        `Overstocked parts give back ${fmtM(over)}; understocked parts need ${fmtM(under)} more. Net, that is ${fmtM(S.inv_now - S.inv_target)} of working capital. The gross excess, stock above target × ${P.tolerance.toFixed(2)}, is ${fmtM(S.excess)}: what to push out or cancel first.`,
+      ${card(tr("st.e3"),
+        tr(invDelta <= 0 ? "st.h3down" : "st.h3up", { now: fmtM(S.inv_now), tgt: fmtM(S.inv_target), d: `${sign(invDelta)}${pct(Math.abs(invDelta))}` }),
+        tr("st.s3", { over: fmtM(over), under: fmtM(under), net: fmtM(S.inv_now - S.inv_target), tol, e: fmtM(S.excess) }),
         "stBridge")}
-      ${card("What finance will see",
-        `Reaching target avoids ${fmtM(C.avoided)} a year in carrying cost`,
-        `At a ${pct(C.rate)} carrying rate, holding inventory costs ${fmtM(C.now)}/yr today and ${fmtM(C.target)}/yr at target. That recurring saving is the P&L number; the excess is one-time cash. Consignment would shift another ${fmtM(C.consignShift)}/yr of carrying cost to suppliers.`,
+      ${card(tr("st.e4"),
+        tr("st.h4", { v: fmtM(C.avoided) }),
+        tr("st.s4", { r: pct(C.rate), now: fmtM(C.now), tgt: fmtM(C.target), c: fmtM(C.consignShift) }),
         "stCarry")}
-      ${card("By recommended program",
-        `${esc(biggest.prog)} parts drive the largest reduction: ${fmtM(biggest.now)} → ${fmtM(biggest.target)}`,
-        `Median target days of supply: ${byProg.filter((g) => g.n).map((g) => `${g.prog} ${Math.round(g.dos)}`).join(", ")}.`,
+      ${card(tr("st.e5"),
+        tr("st.h5", { p: esc(biggest.prog), now: fmtM(biggest.now), tgt: fmtM(biggest.target) }),
+        tr("st.s5", { list: byProg.filter((g) => g.n).map((g) => `${g.prog} ${Math.round(g.dos)}`).join(", ") }),
         "stProg")}
-      ${card("The other side of the ledger",
-        ins.critical.length
-          ? `${ins.critical.length} part${ins.critical.length === 1 ? "" : "s"} sit below safety stock today; building them up takes ${fmtM(ins.criticalBuild)}`
-          : "No part sits below safety stock today",
-        `Another ${watchN} part${watchN === 1 ? " is" : "s are"} below target but above safety stock. Bringing everything up to target takes ${fmtM(ins.riskBuild)}, part of the same plan that releases ${fmtM(over)} elsewhere.`,
-        riskTop.length ? "stRisk" : "", { body: `<p class="hint">Nothing to build up.</p>` })}
-      ${card("Excess & obsolescence exposure",
-        ins.eo.length
-          ? `${fmtM(ins.eoValue)} of stock on declining or slow parts exceeds the next ${P.eo_horizon_weeks} weeks of demand`
-          : `No declining or slow part holds more than ${P.eo_horizon_weeks} weeks of demand`,
-        `${ins.eo.length} part${ins.eo.length === 1 ? "" : "s"}, measured at their recent run-rate (last ${P.trend_weeks} weeks). Slow movers are parts with more than ${P.eo_dos_days} days on hand. This is the stock to sell back, return or reserve for before it becomes a write-off.`,
-        eoTop.length ? "stEO" : "", { body: `<p class="hint">No exposure at the current thresholds.</p>` })}
-      ${top ? card("Who to sit down with first",
-        `Start with ${esc(top.supplier)}: ${top.n} parts, ${fmtM(top.VMI + top.CRP)} recommended for VMI or CRP`,
-        `The top 3 suppliers hold ${pct(top3Share)} of the spend recommended for VMI or CRP. ${consignSub}`,
+      ${card(tr("st.e6"),
+        ins.critical.length ? tr("st.h6", { n: ins.critical.length, v: fmtM(ins.criticalBuild) }) : tr("st.h6none"),
+        tr("st.s6", { ...watchCount, v: fmtM(ins.riskBuild), o: fmtM(over) }),
+        riskTop.length ? "stRisk" : "", { body: `<p class="hint">${tr("st.b6")}</p>` })}
+      ${card(tr("st.e7"),
+        ins.eo.length ? tr("st.h7", { v: fmtM(ins.eoValue), w: P.eo_horizon_weeks }) : tr("st.h7none", { w: P.eo_horizon_weeks }),
+        tr("st.s7", { n: ins.eo.length, tw: P.trend_weeks, d: P.eo_dos_days }),
+        eoTop.length ? "stEO" : "", { body: `<p class="hint">${tr("st.b7")}</p>` })}
+      ${top ? card(tr("st.e8"),
+        tr("st.h8", { s: esc(top.supplier), n: top.n, v: fmtM(top.VMI + top.CRP) }),
+        `${tr("st.s8", { p: pct(top3Share) })} ${consignSub}`,
         "stSup", { wide: true }) : ""}
-      ${card("Rollout in three waves",
-        `Wave 1 frees ${fmtM(wave1.net)} without a single supplier negotiation; all three waves free ${fmtM(totalNet)} in ${3 * P.wave_months} months`,
-        `Wave 1 (${wave1.when.toLowerCase()}), ${wave1.n} parts: ${wave1.what}. Wave 2: VMI/CRP with ${wave2Names.length ? esc(wave2Names.join(", ")) : "no supplier"}. Wave 3: the remaining ${W[2].suppliers.length} supplier${W[2].suppliers.length === 1 ? "" : "s"}.`,
+      ${card(tr("st.e9"),
+        tr("st.h9", { w1: fmtM(wave1.net), all: fmtM(totalNet), m: 3 * P.wave_months }),
+        tr("st.s9", { when: esc(tx("vp.when.", wave1.when)), n: wave1.n, what: tr("wave.what.1").toLowerCase(), sup: wave2Names.length ? esc(wave2Names.join(", ")) : tr("st.noSupplier"), k: W[2].suppliers.length }),
         "stWaves", { wide: true })}
-      ${scen.length ? card("Scenarios side by side",
-        `${scen.length + 1} policies compared on the same data`,
-        "Current policy against the scenarios saved this session. Excess and consignment stay separate; carrying cost is the recurring P&L effect.",
+      ${scen.length ? card(tr("st.e10"),
+        tr("st.h10", { n: scen.length + 1 }),
+        tr("st.s10"),
         "", { wide: true, body: scenarioTable }) : ""}
     </div>`;
 
@@ -225,19 +222,19 @@ export function renderStory(container, result, P, ins, ctx = {}) {
     data: {
       labels: curve.map((_, i) => i + 1),
       datasets: [
-        { label: "Cumulative share of spend", data: curve, borderColor: t.prog("VMI"), borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0 },
-        { label: `A cutoff ${pct(P.abc_a)}`, data: curve.map(() => P.abc_a), borderColor: t.muted, borderWidth: 1, borderDash: [4, 4], pointRadius: 0, pointHoverRadius: 0 },
-        { label: `B cutoff ${pct(P.abc_b)}`, data: curve.map(() => P.abc_b), borderColor: t.axis, borderWidth: 1, borderDash: [2, 3], pointRadius: 0, pointHoverRadius: 0 },
+        { label: tr("st.cCum"), data: curve, borderColor: t.prog("VMI"), borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0 },
+        { label: tr("st.cA", { p: pct(P.abc_a) }), data: curve.map(() => P.abc_a), borderColor: t.muted, borderWidth: 1, borderDash: [4, 4], pointRadius: 0, pointHoverRadius: 0 },
+        { label: tr("st.cB", { p: pct(P.abc_b) }), data: curve.map(() => P.abc_b), borderColor: t.axis, borderWidth: 1, borderDash: [2, 3], pointRadius: 0, pointHoverRadius: 0 },
       ],
     },
     options: opts({
       interaction: { mode: "index", intersect: false },
       plugins: {
         legend: legend(t),
-        tooltip: { filter: (i) => i.datasetIndex === 0, callbacks: { title: (i) => `Top ${i[0].label} parts`, label: (i) => `${pct(i.parsed.y, 1)} of spend` } },
+        tooltip: { filter: (i) => i.datasetIndex === 0, callbacks: { title: (i) => tr("st.cTop", { n: i[0].label }), label: (i) => tr("st.cOfSpend", { p: pct(i.parsed.y, 1) }) } },
       },
       scales: {
-        x: axisCat(t, { title: { display: true, text: "Parts ranked by annual spend", color: t.muted, font: { size: 11 } }, ticks: { color: t.muted, maxTicksLimit: 8, maxRotation: 0 } }),
+        x: axisCat(t, { title: { display: true, text: tr("st.cRanked"), color: t.muted, font: { size: 11 } }, ticks: { color: t.muted, maxTicksLimit: 8, maxRotation: 0 } }),
         y: axisVal(t, { min: 0, max: 1, ticks: { color: t.muted, callback: (v) => pct(v), maxTicksLimit: 6 } }),
       },
     }),
@@ -246,7 +243,7 @@ export function renderStory(container, result, P, ins, ctx = {}) {
   draw("stMix", {
     type: "bar",
     data: {
-      labels: ["Today", "Recommended"],
+      labels: [tr("st.cToday"), tr("st.cRec")],
       datasets: PROGRAMS.map((prog, i) => ({
         label: prog, data: [mixNow[i], mixRec[i]], backgroundColor: t.prog(prog),
         borderColor: t.surface, borderWidth: { left: 0, right: 2, top: 0, bottom: 0 }, borderSkipped: false, maxBarThickness: 44, barPercentage: 0.7,
@@ -254,7 +251,7 @@ export function renderStory(container, result, P, ins, ctx = {}) {
     },
     options: opts({
       indexAxis: "y",
-      plugins: { legend: legend(t), tooltip: { callbacks: { label: (i) => `${i.dataset.label}: ${pct(i.parsed.x, 1)} of spend` } } },
+      plugins: { legend: legend(t), tooltip: { callbacks: { label: (i) => `${i.dataset.label}: ${tr("st.cOfSpend", { p: pct(i.parsed.x, 1) })}` } } },
       scales: {
         x: axisVal(t, { stacked: true, min: 0, max: 1, ticks: { color: t.muted, callback: (v) => pct(v) } }),
         y: axisCat(t, { stacked: true, ticks: { color: t.ink2, font: { size: 12, weight: "600" } } }),
@@ -266,9 +263,9 @@ export function renderStory(container, result, P, ins, ctx = {}) {
   draw("stBridge", {
     type: "bar",
     data: {
-      labels: [["Inventory", "now"], ["Overstock", "given back"], ["Understock", "built"], ["Target", ""]],
+      labels: [tr("st.bNow").split("|"), tr("st.bOver").split("|"), tr("st.bUnder").split("|"), [tr("st.bTarget"), ""]],
       datasets: [{
-        label: "Inventory value",
+        label: tr("st.cInvValue"),
         data: [[0, S.inv_now], [afterOver, S.inv_now], [afterOver, afterOver + under], [0, S.inv_target]],
         backgroundColor: [t.ink2, t.good, t.muted, t.ink], borderRadius: 4, borderSkipped: false, maxBarThickness: 44, barPercentage: 0.6,
       }],
@@ -288,14 +285,14 @@ export function renderStory(container, result, P, ins, ctx = {}) {
   draw("stCarry", {
     type: "bar",
     data: {
-      labels: ["Today", "At target", P.consignment ? ["At target, net", "of consignment"] : ["At target", "(no consignment)"]],
-      datasets: [{ label: "Carrying cost per year", data: carryVals, backgroundColor: [t.ink2, t.good, t.muted], borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.6 }],
+      labels: [tr("st.cToday"), tr("st.cAtTarget"), (P.consignment ? tr("st.cNetConsign") : tr("st.cNoConsign")).split("|")],
+      datasets: [{ label: tr("st.cCarryYr"), data: carryVals, backgroundColor: [t.ink2, t.good, t.muted], borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.6 }],
     },
-    plugins: [barLabels(carryVals.map((v) => `${fmtM(v)}/yr`), t.ink)],
+    plugins: [barLabels(carryVals.map((v) => `${fmtM(v)}${tr("unit.perYr")}`), t.ink)],
     options: opts({
       indexAxis: "y",
       layout: { padding: { right: 80 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (i) => `${fmtM(i.parsed.x)} per year` } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (i) => `${fmtM(i.parsed.x)}${tr("unit.perYr")}` } } },
       scales: { x: axisVal(t, { beginAtZero: true, ticks: money(t) }), y: axisCat(t, { ticks: { color: t.ink2, font: { size: 12 } } }) },
     }),
   });
@@ -305,15 +302,15 @@ export function renderStory(container, result, P, ins, ctx = {}) {
     data: {
       labels: byProg.map((g) => `${g.prog} (${g.n})`),
       datasets: [
-        { label: "Now", data: byProg.map((g) => g.now), backgroundColor: byProg.map((g) => `${t.prog(g.prog)}59`), borderColor: byProg.map((g) => t.prog(g.prog)), borderWidth: 1, borderRadius: 4, borderSkipped: "start" },
-        { label: "Target", data: byProg.map((g) => g.target), backgroundColor: byProg.map((g) => t.prog(g.prog)), borderRadius: 4, borderSkipped: "start" },
+        { label: tr("st.cNow"), data: byProg.map((g) => g.now), backgroundColor: byProg.map((g) => `${t.prog(g.prog)}59`), borderColor: byProg.map((g) => t.prog(g.prog)), borderWidth: 1, borderRadius: 4, borderSkipped: "start" },
+        { label: tr("st.bTarget"), data: byProg.map((g) => g.target), backgroundColor: byProg.map((g) => t.prog(g.prog)), borderRadius: 4, borderSkipped: "start" },
       ],
     },
     options: opts({
       plugins: {
         legend: { ...legend(t), labels: { ...legend(t).labels, generateLabels: () => [
-          { text: "Now (light)", fillStyle: `${t.muted}59`, strokeStyle: t.muted, lineWidth: 1, fontColor: t.ink2 },
-          { text: "Target (solid)", fillStyle: t.muted, strokeStyle: t.muted, lineWidth: 0, fontColor: t.ink2 },
+          { text: tr("st.cNowLight"), fillStyle: `${t.muted}59`, strokeStyle: t.muted, lineWidth: 1, fontColor: t.ink2 },
+          { text: tr("st.cTargetSolid"), fillStyle: t.muted, strokeStyle: t.muted, lineWidth: 0, fontColor: t.ink2 },
         ] } },
         tooltip: { callbacks: { label: (i) => `${i.dataset.label}: ${fmtM(i.parsed.y)}` } },
       },
@@ -327,18 +324,18 @@ export function renderStory(container, result, P, ins, ctx = {}) {
       data: {
         labels: riskTop.map((r) => r.part.part_number),
         datasets: ["Critical", "Watch"].map((tier) => ({
-          label: tier === "Critical" ? "Below safety stock" : "Below target",
+          label: tier === "Critical" ? tr("risk.belowSafety") : tr("risk.belowTarget"),
           data: riskTop.map((r) => (r.tier === tier ? r.build_value : null)),
           backgroundColor: tier === "Critical" ? t.crit : t.warn, borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.8,
         })),
       },
-      plugins: [barLabels(riskTop.map((r) => `${fmtM(r.build_value)} · ${r.weeks_cover.toFixed(1)} wks cover`), t.ink2)],
+      plugins: [barLabels(riskTop.map((r) => tr("st.cCover", { v: fmtM(r.build_value), w: fmtN(r.weeks_cover, 1) })), t.ink2)],
       options: opts({
         indexAxis: "y",
         layout: { padding: { right: 140 } },
         plugins: {
           legend: legend(t),
-          tooltip: { callbacks: { label: (i) => { const r = riskTop[i.dataIndex]; return [`Build-up ${fmtM(r.build_value)}`, `On hand ${nf0.format(r.part.on_hand_qty)} vs safety ${nf0.format(r.safety)}`, `Recommended ${r.part.recommended_program}`]; } } },
+          tooltip: { callbacks: { label: (i) => { const r = riskTop[i.dataIndex]; return [tr("st.tBuild", { v: fmtM(r.build_value) }), tr("st.tOnHandSafety", { oh: fmtN(r.part.on_hand_qty), ss: fmtN(r.safety) }), tr("st.tRec", { p: r.part.recommended_program })]; } } },
         },
         scales: { x: axisVal(t, { stacked: true, beginAtZero: true, ticks: money(t) }), y: axisCat(t, { stacked: true, ticks: { color: t.ink2, font: { size: 11 } } }) },
       }),
@@ -350,15 +347,15 @@ export function renderStory(container, result, P, ins, ctx = {}) {
       type: "bar",
       data: {
         labels: eoTop.map((e) => e.part.part_number),
-        datasets: [{ label: "Exposure", data: eoTop.map((e) => e.value), backgroundColor: t.ink2, borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.7 }],
+        datasets: [{ label: tr("risk.exposure"), data: eoTop.map((e) => e.value), backgroundColor: t.ink2, borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.7 }],
       },
-      plugins: [barLabels(eoTop.map((e) => `${fmtM(e.value)} · ${e.part.trend === "Declining" ? "declining" : "slow"}`), t.ink2)],
+      plugins: [barLabels(eoTop.map((e) => `${fmtM(e.value)} · ${tr(e.part.trend === "Declining" ? "st.declining" : "st.slow")}`), t.ink2)],
       options: opts({
         indexAxis: "y",
         layout: { padding: { right: 120 } },
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: (i) => { const e = eoTop[i.dataIndex]; return [`Exposure ${fmtM(e.value)}`, e.why, `On hand ${nf0.format(e.part.on_hand_qty)} vs ${nf0.format(e.covered)} needed in ${P.eo_horizon_weeks} wks`]; } } },
+          tooltip: { callbacks: { label: (i) => { const e = eoTop[i.dataIndex]; return [tr("st.tExposure", { v: fmtM(e.value) }), tx("why.", e.why), tr("st.tNeeded", { oh: fmtN(e.part.on_hand_qty), c: fmtN(e.covered), w: P.eo_horizon_weeks })]; } } },
         },
         scales: { x: axisVal(t, { beginAtZero: true, ticks: money(t) }), y: axisCat(t, { ticks: { color: t.ink2, font: { size: 11 } } }) },
       }),
@@ -375,13 +372,13 @@ export function renderStory(container, result, P, ins, ctx = {}) {
           borderColor: t.surface, borderWidth: { right: 2, left: 0, top: 0, bottom: 0 }, borderSkipped: false, maxBarThickness: 44, barPercentage: 0.7,
         })),
       },
-      plugins: [barLabels(topSup.map((g) => `${fmtM(g.VMI + g.CRP)} · ${g.n} parts`), t.ink2)],
+      plugins: [barLabels(topSup.map((g) => `${fmtM(g.VMI + g.CRP)} · ${tr("st.nParts", { n: g.n })}`), t.ink2)],
       options: opts({
         indexAxis: "y",
         layout: { padding: { right: 120 } },
         plugins: {
           legend: legend(t),
-          tooltip: { callbacks: { label: (i) => `${i.dataset.label}: ${fmtM(i.parsed.x)}`, afterBody: (items) => { const g = topSup[items[0].dataIndex]; return [`${g.n} parts`, g.consign ? `Consignment transfer ${fmtM(g.consign)}` : ""].filter(Boolean); } } },
+          tooltip: { callbacks: { label: (i) => `${i.dataset.label}: ${fmtM(i.parsed.x)}`, afterBody: (items) => { const g = topSup[items[0].dataIndex]; return [tr("st.nParts", { n: g.n }), g.consign ? tr("st.tConsign", { v: fmtM(g.consign) }) : ""].filter(Boolean); } } },
         },
         scales: { x: axisVal(t, { stacked: true, beginAtZero: true, ticks: money(t) }), y: axisCat(t, { stacked: true, ticks: { color: t.ink2, font: { size: 12 } } }) },
       }),
@@ -391,10 +388,10 @@ export function renderStory(container, result, P, ins, ctx = {}) {
   draw("stWaves", {
     type: "bar",
     data: {
-      labels: W.map((w) => [w.label, w.when, `${w.n} parts`]),
+      labels: W.map((w, i) => [tr("wave.label", { n: i + 1 }), tx("vp.when.", w.when), tr("st.nParts", { n: w.n })]),
       datasets: [
-        { label: "Inventory released", data: W.map((w) => w.released), backgroundColor: t.good, borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.6 },
-        { label: "Build-up", data: W.map((w) => -w.built), backgroundColor: t.muted, borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.6 },
+        { label: tr("wave.released"), data: W.map((w) => w.released), backgroundColor: t.good, borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.6 },
+        { label: tr("risk.build"), data: W.map((w) => -w.built), backgroundColor: t.muted, borderRadius: 4, borderSkipped: "start", maxBarThickness: 44, barPercentage: 0.6 },
       ],
     },
     plugins: [{
@@ -403,7 +400,7 @@ export function renderStory(container, result, P, ins, ctx = {}) {
         const { ctx: c } = chart, meta = chart.getDatasetMeta(0);
         c.save();
         c.font = "600 12px system-ui, -apple-system, 'Segoe UI', sans-serif"; c.fillStyle = t.ink; c.textAlign = "center"; c.textBaseline = "bottom";
-        meta.data.forEach((bar, i) => c.fillText(chart.width < 520 ? `net ${fmtM(W[i].net)}` : `net ${fmtM(W[i].net)} · cumulative ${fmtM(W[i].cumulative)}`, bar.x, bar.y - 4));
+        meta.data.forEach((bar, i) => c.fillText(chart.width < 520 ? tr("st.wNet", { v: fmtM(W[i].net) }) : tr("st.wNetCum", { v: fmtM(W[i].net), c: fmtM(W[i].cumulative) }), bar.x, bar.y - 4));
         c.restore();
       },
     }],
@@ -411,7 +408,7 @@ export function renderStory(container, result, P, ins, ctx = {}) {
       layout: { padding: { top: 30 } },
       plugins: {
         legend: legend(t),
-        tooltip: { callbacks: { label: (i) => `${i.dataset.label}: ${fmtM(Math.abs(i.parsed.y))}`, afterBody: (items) => { const w = W[items[0].dataIndex]; return [w.what, w.suppliers.length ? `Suppliers: ${w.suppliers.map((x) => x.supplier).join(", ")}` : ""].filter(Boolean); } } },
+        tooltip: { callbacks: { label: (i) => `${i.dataset.label}: ${fmtM(Math.abs(i.parsed.y))}`, afterBody: (items) => { const w = W[items[0].dataIndex]; return [tr(`wave.what.${items[0].dataIndex + 1}`), w.suppliers.length ? tr("st.tSuppliers", { list: w.suppliers.map((x) => x.supplier).join(", ") }) : ""].filter(Boolean); } } },
       },
       scales: {
         x: axisCat(t, { stacked: true, ticks: { color: t.ink2, font: { size: 12 }, maxRotation: 0, autoSkip: false } }),

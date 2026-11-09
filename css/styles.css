@@ -452,3 +452,16 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
   table.grid.stacked tr.past-sla td:first-child { box-shadow: none; }
   table.grid.stacked tr.past-sla { box-shadow: inset 3px 0 0 var(--crit); }
 }
+
+/* Language toggle (EN | ES): same control as the layer toggle, compact, never the accent fill. */
+.seg-lang button { padding: 4px 8px; font-variant: all-small-caps; letter-spacing: 0.04em; font-size: 13px; }
+.seg-lang button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--border-strong, var(--border)) inset; font-weight: 700; }
+
+/* Long tables render one page at a time (js/ui.js paged). */
+.grid tr.more-row td { text-align: left; padding: 8px 10px; background: var(--surface-2); }
+.grid tr.more-row .btn { margin-left: 8px; }
+
+/* First paint: hide the shell until the sample is analyzed, so the layout doesn't jump (CLS).
+   The animation reveals it anyway after 4 s if the script never runs. */
+html.loading main, html.loading .footer { visibility: hidden; animation: reveal 0s linear 4s forwards; }
+@keyframes reveal { to { visibility: visible; } }

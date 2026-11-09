@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="loading">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,35 +25,59 @@
   <meta name="twitter:description" content="Pull programs are a portfolio decision. Segment every part, set the policy, and see the inventory, carrying cost and risk it moves.">
   <meta name="twitter:image" content="https://andreevazquez.github.io/pull-program-fit-analyzer/og-image.png">
   <meta name="twitter:image:alt" content="Pull Program Fit Analyzer: an ABC by XYZ matrix colored by recommended program.">
-  <link rel="stylesheet" href="css/styles.css?v=18">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script type="module" src="js/app.js?v=18"></script>
+  <!-- Same policy as the Content-Security-Policy header in _headers (Cloudflare); GitHub Pages can't set headers. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="stylesheet" href="css/styles.css?v=19">
+  <link rel="preload" href="data/sample_parts.csv" as="fetch" crossorigin>
+  <link rel="modulepreload" href="js/app.js?v=19">
+  <link rel="modulepreload" href="js/format.js?v=19">
+  <link rel="modulepreload" href="js/ui.js?v=19">
+  <link rel="modulepreload" href="js/story.js?v=19">
+  <link rel="modulepreload" href="js/insights.js?v=19">
+  <link rel="modulepreload" href="js/deck.js?v=19">
+  <link rel="modulepreload" href="js/sales.js?v=19">
+  <link rel="modulepreload" href="js/sales-view.js?v=19">
+  <link rel="modulepreload" href="js/freshness.js?v=19">
+  <link rel="modulepreload" href="js/v2.js?v=19">
+  <link rel="modulepreload" href="js/exceptions.js?v=19">
+  <link rel="modulepreload" href="js/i18n.js?v=19">
+  <link rel="modulepreload" href="js/i18n/en.js?v=19">
+  <link rel="modulepreload" href="js/segment.js?v=19">
+  <link rel="modulepreload" href="js/layers.js?v=19">
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha384-D/t0ZMqQW31H3az8ktEiNb39wyKnS82iFY52QPACM+IjKW3jDUhyIgh2PApRqJZs" crossorigin="anonymous"></script>
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
+  <script type="module" src="js/app.js?v=19"></script>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <p class="maker">Ricardo Vázquez <span class="maker-role"><span class="sep" aria-hidden="true">· </span>Supply chain, from the plant floor to the system rollout</span> <span class="sep" aria-hidden="true">·</span>
-        <a href="https://www.linkedin.com/in/ricardovazquez88" target="_blank" rel="noopener noreferrer">LinkedIn<span class="sr-only"> (opens in a new tab)</span></a> <span aria-hidden="true">·</span>
-        <a href="https://github.com/andreevazquez/pull-program-fit-analyzer" target="_blank" rel="noopener noreferrer">Source<span class="sr-only"> on GitHub (opens in a new tab)</span></a></p>
+      <p class="maker">Ricardo Vázquez <span class="maker-role"><span class="sep" aria-hidden="true">· </span><span data-i18n="ix.role">Supply chain, from the plant floor to the system rollout</span></span> <span class="sep" aria-hidden="true">·</span>
+        <a href="https://www.linkedin.com/in/ricardovazquez88" target="_blank" rel="noopener noreferrer">LinkedIn<span class="sr-only" data-i18n="ix.newTab"> (opens in a new tab)</span></a> <span aria-hidden="true">·</span>
+        <a href="https://github.com/andreevazquez/pull-program-fit-analyzer" target="_blank" rel="noopener noreferrer"><span data-i18n="ix.source">Source</span><span class="sr-only" data-i18n="ix.onGithub"> on GitHub (opens in a new tab)</span></a></p>
       <h1>Pull Program Fit Analyzer</h1>
-      <p class="tagline">Pull programs are a portfolio decision. The policy is explicit and adjustable.</p>
+      <p class="tagline" data-i18n="ix.tagline">Pull programs are a portfolio decision. The policy is explicit and adjustable.</p>
     </div>
     <div class="actions">
-      <div class="seg" role="group" aria-label="Layer: who is looking">
-        <button type="button" data-view="story" data-layer="exec" aria-pressed="false" title="Director / VP: money, service and the plan">Executive</button>
-        <button type="button" data-view="analysis" data-layer="analysis" aria-pressed="true" title="Supply chain manager: segmentation, policy, suppliers">Manager</button>
-        <button type="button" data-view="planner" data-layer="planner" aria-pressed="false" title="Planner: what to do this week, part by part">Planner</button>
+      <div class="seg seg-lang" role="group" aria-label="Language / Idioma">
+        <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="es" lang="es" aria-pressed="false">ES</button>
       </div>
-      <span class="source" id="source">Loading sample…</span>
+      <div class="seg" id="layerSeg" role="group" aria-label="Layer: who is looking" data-i18n-attr="aria-label:ix.layerAria">
+        <button type="button" data-view="story" data-layer="exec" aria-pressed="false" title="Director / VP: money, service and the plan" data-i18n="layer.exec" data-i18n-attr="title:ix.execTitle">Executive</button>
+        <button type="button" data-view="analysis" data-layer="analysis" aria-pressed="true" title="Supply chain manager: segmentation, policy, suppliers" data-i18n="layer.manager" data-i18n-attr="title:ix.mgrTitle">Manager</button>
+        <button type="button" data-view="planner" data-layer="planner" aria-pressed="false" title="Planner: what to do this week, part by part" data-i18n="layer.planner" data-i18n-attr="title:ix.plTitle">Planner</button>
+      </div>
+      <span class="source" id="source" data-i18n="ix.loading">Loading sample…</span>
       <label class="btn" data-layers="analysis planner">
         <input type="file" id="upload" accept=".csv,text/csv" hidden>
-        Upload CSV
+        <span data-i18n="ix.upload">Upload CSV</span>
       </label>
-      <button class="btn btn-ghost" data-layers="analysis planner" id="formatHelp" type="button" aria-haspopup="dialog">CSV format</button>
-      <button class="btn" data-layers="analysis" id="export" type="button">Export CSV</button>
+      <button class="btn btn-ghost" data-layers="analysis planner" id="formatHelp" type="button" aria-haspopup="dialog" data-i18n="ix.format">CSV format</button>
+      <button class="btn" data-layers="analysis" id="export" type="button" data-i18n="ix.export">Export CSV</button>
       <button class="btn btn-primary" data-layers="analysis" id="policyToggle" type="button" aria-expanded="false" aria-controls="policy">
-        Policy <span class="pill" id="policyDiff" hidden></span>
+        <span data-i18n="ix.policy">Policy</span> <span class="pill" id="policyDiff" hidden></span>
       </button>
     </div>
   </header>
@@ -63,32 +87,32 @@
       <div class="notice" id="notice" hidden></div>
 
       <div class="exec-bar" id="execBar" hidden>
-        <div class="seg seg-sub" role="group" aria-label="Executive view">
-          <button type="button" data-subview="story" aria-pressed="true">Overview</button>
-          <button type="button" data-subview="sales" aria-pressed="false">Supplier impact</button>
+        <div class="seg seg-sub" role="group" aria-label="Executive view" data-i18n-attr="aria-label:ix.execView">
+          <button type="button" data-subview="story" aria-pressed="true" data-i18n="ix.overview">Overview</button>
+          <button type="button" data-subview="sales" aria-pressed="false" data-i18n="ix.supImpact">Supplier impact</button>
         </div>
-        <p class="hint">For directors and VPs: inventory, service, suppliers and the value pipeline. Follows the manager's Policy.</p>
+        <p class="hint" data-i18n="ix.execHint">For directors and VPs: inventory, service, suppliers and the value pipeline. Follows the manager's Policy.</p>
       </div>
-      <section class="story" id="execTop" aria-label="Executive scorecard" hidden></section>
-      <section class="story" id="story" aria-label="Story" hidden></section>
-      <section class="story" id="sales" aria-label="Supplier impact: the suppliers' view of the policy" hidden></section>
-      <section id="planner" aria-label="Planner" hidden></section>
+      <section class="story" id="execTop" aria-label="Executive scorecard" data-i18n-attr="aria-label:ix.execScore" hidden></section>
+      <section class="story" id="story" aria-label="Story" data-i18n-attr="aria-label:ix.overview" hidden></section>
+      <section class="story" id="sales" aria-label="Supplier impact: the suppliers' view of the policy" data-i18n-attr="aria-label:ix.supImpactAria" hidden></section>
+      <section id="planner" aria-label="Planner" data-i18n-attr="aria-label:layer.planner" hidden></section>
 
-      <section class="kpis" id="kpis" aria-label="Summary" data-analysis></section>
+      <section class="kpis" id="kpis" aria-label="Summary" data-i18n-attr="aria-label:deck.summaryEyebrow" data-analysis></section>
 
       <section class="row2" data-analysis>
         <div class="card">
           <div class="card-head">
             <h2>ABC × XYZ</h2>
-            <span class="hint">Spend class × demand variability. Cell color = dominant recommended program. Click to filter.</span>
+            <span class="hint" data-i18n="ix.matrixHint">Spend class × demand variability. Cell color = dominant recommended program. Click to filter.</span>
           </div>
           <div id="matrix" class="matrix"></div>
           <div class="legend" id="legend"></div>
         </div>
         <div class="card">
           <div class="card-head">
-            <h2>Program migration</h2>
-            <span class="hint">Parts by current → recommended program. Click a cell to filter.</span>
+            <h2 data-i18n="ix.migration">Program migration</h2>
+            <span class="hint" data-i18n="ix.migHint">Parts by current → recommended program. Click a cell to filter.</span>
           </div>
           <div id="migration"></div>
         </div>
@@ -96,30 +120,30 @@
 
       <section class="card" data-analysis>
         <div class="tabs" role="tablist">
-          <button role="tab" class="tab" id="tabbtn-parts" data-tab="parts" aria-controls="tab-parts" aria-selected="true" tabindex="0">Parts</button>
-          <button role="tab" class="tab" id="tabbtn-exceptions" data-tab="exceptions" aria-controls="tab-exceptions" aria-selected="false" tabindex="-1">Exceptions <span class="pill" id="excCount" title="Critical open exceptions, all owners"></span></button>
-          <button role="tab" class="tab" id="tabbtn-suppliers" data-tab="suppliers" aria-controls="tab-suppliers" aria-selected="false" tabindex="-1">Suppliers</button>
-          <button role="tab" class="tab" id="tabbtn-pipeline" data-tab="pipeline" aria-controls="tab-pipeline" aria-selected="false" tabindex="-1">Pipeline <span class="pill" id="escCount"></span></button>
-          <button role="tab" class="tab" id="tabbtn-opps" data-tab="opps" aria-controls="tab-opps" aria-selected="false" tabindex="-1">MOQ &amp; LT</button>
-          <button role="tab" class="tab" id="tabbtn-waves" data-tab="waves" aria-controls="tab-waves" aria-selected="false" tabindex="-1">Rollout waves</button>
-          <button role="tab" class="tab" id="tabbtn-risk" data-tab="risk" aria-controls="tab-risk" aria-selected="false" tabindex="-1">Risk</button>
-          <button role="tab" class="tab" id="tabbtn-scenarios" data-tab="scenarios" aria-controls="tab-scenarios" aria-selected="false" tabindex="-1">Scenarios</button>
-          <button role="tab" class="tab" id="tabbtn-freshness" data-tab="freshness" aria-controls="tab-freshness" aria-selected="false" tabindex="-1">Freshness <span class="pill" id="claimCount"></span></button>
-          <button role="tab" class="tab" id="tabbtn-integrity" data-tab="integrity" aria-controls="tab-integrity" aria-selected="false" tabindex="-1">Data integrity <span class="pill" id="issueCount"></span></button>
+          <button role="tab" class="tab" id="tabbtn-parts" data-tab="parts" aria-controls="tab-parts" aria-selected="true" tabindex="0" data-i18n="tab.parts">Parts</button>
+          <button role="tab" class="tab" id="tabbtn-exceptions" data-tab="exceptions" aria-controls="tab-exceptions" aria-selected="false" tabindex="-1"><span data-i18n="tab.exceptions">Exceptions</span> <span class="pill" id="excCount" title="Critical open exceptions, all owners" data-i18n-attr="title:ix.excPill"></span></button>
+          <button role="tab" class="tab" id="tabbtn-suppliers" data-tab="suppliers" aria-controls="tab-suppliers" aria-selected="false" tabindex="-1" data-i18n="tab.suppliers">Suppliers</button>
+          <button role="tab" class="tab" id="tabbtn-pipeline" data-tab="pipeline" aria-controls="tab-pipeline" aria-selected="false" tabindex="-1"><span data-i18n="tab.pipeline">Pipeline</span> <span class="pill" id="escCount"></span></button>
+          <button role="tab" class="tab" id="tabbtn-opps" data-tab="opps" aria-controls="tab-opps" aria-selected="false" tabindex="-1" data-i18n="tab.opps">MOQ &amp; LT</button>
+          <button role="tab" class="tab" id="tabbtn-waves" data-tab="waves" aria-controls="tab-waves" aria-selected="false" tabindex="-1" data-i18n="tab.waves">Rollout waves</button>
+          <button role="tab" class="tab" id="tabbtn-risk" data-tab="risk" aria-controls="tab-risk" aria-selected="false" tabindex="-1" data-i18n="tab.risk">Risk</button>
+          <button role="tab" class="tab" id="tabbtn-scenarios" data-tab="scenarios" aria-controls="tab-scenarios" aria-selected="false" tabindex="-1" data-i18n="tab.scenarios">Scenarios</button>
+          <button role="tab" class="tab" id="tabbtn-freshness" data-tab="freshness" aria-controls="tab-freshness" aria-selected="false" tabindex="-1"><span data-i18n="tab.freshness">Freshness</span> <span class="pill" id="claimCount"></span></button>
+          <button role="tab" class="tab" id="tabbtn-integrity" data-tab="integrity" aria-controls="tab-integrity" aria-selected="false" tabindex="-1"><span data-i18n="tab.integrity">Data integrity</span> <span class="pill" id="issueCount"></span></button>
         </div>
 
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-parts" id="tab-parts">
           <div class="filters" id="filters">
-            <input type="search" id="fSearch" placeholder="Search part, description, manufacturer" aria-label="Search">
-            <select id="fCommodity" aria-label="Commodity"></select>
-            <select id="fSupplier" aria-label="Supplier"></select>
-            <select id="fAbc" aria-label="ABC class"></select>
-            <select id="fCurrent" aria-label="Current program"></select>
-            <select id="fRec" aria-label="Recommended program"></select>
+            <input type="search" id="fSearch" placeholder="Search part, description, manufacturer" aria-label="Search" data-i18n-attr="placeholder:ix.search;aria-label:ix.searchAria">
+            <select id="fCommodity" aria-label="Commodity" data-i18n-attr="aria-label:col.commodity"></select>
+            <select id="fSupplier" aria-label="Supplier" data-i18n-attr="aria-label:col.supplier"></select>
+            <select id="fAbc" aria-label="ABC class" data-i18n-attr="aria-label:ix.abcClass"></select>
+            <select id="fCurrent" aria-label="Current program" data-i18n-attr="aria-label:col.current_program"></select>
+            <select id="fRec" aria-label="Recommended program" data-i18n-attr="aria-label:col.recommended_program"></select>
             <label class="check"><input type="checkbox" id="fSuperA"> Super A</label>
-            <label class="check"><input type="checkbox" id="fChange"> Changes only</label>
-            <label class="check"><input type="checkbox" id="fIssue"> Has issue</label>
-            <button class="btn btn-ghost" id="fClear" type="button">Clear</button>
+            <label class="check"><input type="checkbox" id="fChange"> <span data-i18n="ix.changesOnly">Changes only</span></label>
+            <label class="check"><input type="checkbox" id="fIssue"> <span data-i18n="ix.hasIssue">Has issue</span></label>
+            <button class="btn btn-ghost" id="fClear" type="button" data-i18n="ix.clear">Clear</button>
           </div>
           <div class="chips" id="chips"></div>
           <div class="table-wrap">
@@ -132,7 +156,7 @@
         </div>
 
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-suppliers" id="tab-suppliers" hidden>
-          <p class="hint">The negotiation list: suppliers ranked by annual spend recommended for VMI or CRP. Start at the top.</p>
+          <p class="hint" data-i18n="ix.supHint">The negotiation list: suppliers ranked by annual spend recommended for VMI or CRP. Start at the top.</p>
           <div class="table-wrap"><table class="grid" id="supplierTable"></table></div>
           <div id="scorecard"></div>
         </div>
@@ -147,21 +171,21 @@
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-freshness" id="tab-freshness" hidden></div>
 
         <div class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-integrity" id="tab-integrity" hidden>
-          <p class="hint">Blocking issues keep a part out of segmentation until the master data is fixed. Warnings are analyzed but should be reviewed.</p>
+          <p class="hint" data-i18n="ix.integHint">Blocking issues keep a part out of segmentation until the master data is fixed. Warnings are analyzed but should be reviewed.</p>
           <div class="table-wrap"><table class="grid" id="integrityTable"></table></div>
         </div>
       </section>
     </main>
 
-    <aside class="policy" id="policy" aria-label="Policy" hidden>
+    <aside class="policy" id="policy" aria-label="Policy" data-i18n-attr="aria-label:ix.policy" hidden>
       <div class="policy-head">
-        <h2>Policy</h2>
+        <h2 data-i18n="ix.policy">Policy</h2>
         <div>
-          <button class="btn btn-ghost" id="policyReset" type="button">Reset to defaults</button>
-          <button class="btn btn-ghost icon" id="policyClose" type="button" aria-label="Close policy">×</button>
+          <button class="btn btn-ghost" id="policyReset" type="button" data-i18n="ix.reset">Reset to defaults</button>
+          <button class="btn btn-ghost icon" id="policyClose" type="button" aria-label="Close policy" data-i18n-attr="aria-label:ix.closePolicy">×</button>
         </div>
       </div>
-      <p class="hint">Every threshold the recommendation depends on. Changes recompute instantly.</p>
+      <p class="hint" data-i18n="ix.policyHint">Every threshold the recommendation depends on. Changes recompute instantly.</p>
       <form id="policyForm" autocomplete="off"></form>
     </aside>
   </div>
@@ -173,55 +197,55 @@
         <h2 id="dTitle"></h2>
         <p class="hint" id="dSub"></p>
       </div>
-      <button class="btn btn-ghost icon" id="dClose" type="button" aria-label="Close">×</button>
+      <button class="btn btn-ghost icon" id="dClose" type="button" aria-label="Close" data-i18n-attr="aria-label:ix.close">×</button>
     </div>
     <div class="drawer-body" id="dBody"></div>
   </aside>
 
   <dialog class="guide" id="guide" aria-labelledby="guideTitle">
     <div class="guide-head">
-      <h2 id="guideTitle">Analyze your own parts</h2>
-      <button class="btn btn-ghost icon" type="button" data-close aria-label="Close">×</button>
+      <h2 id="guideTitle" data-i18n="ix.gTitle">Analyze your own parts</h2>
+      <button class="btn btn-ghost icon" type="button" data-close aria-label="Close" data-i18n-attr="aria-label:ix.close">×</button>
     </div>
     <div class="guide-body">
       <ol class="guide-steps">
-        <li><b>Download a template.</b> Start from the blank one, or from the 150-part sample to see real-looking data.</li>
-        <li><b>Fill one row per purchased part</b> with 26 weeks of demand, oldest week first.</li>
-        <li><b>Save as CSV</b> (in Excel: <i>CSV UTF-8, comma delimited</i>) and click <b>Upload CSV</b>.</li>
+        <li data-i18n-html="ix.g1"><b>Download a template.</b> Start from the blank one, or from the 150-part sample to see real-looking data.</li>
+        <li data-i18n-html="ix.g2"><b>Fill one row per purchased part</b> with 26 weeks of demand, oldest week first.</li>
+        <li data-i18n-html="ix.g3"><b>Save as CSV</b> (in Excel: <i>CSV UTF-8, comma delimited</i>) and click <b>Upload CSV</b>.</li>
       </ol>
       <div class="guide-actions">
-        <button class="btn btn-primary" type="button" id="dlTemplate">Download blank template</button>
-        <a class="btn" href="data/sample_parts.csv" download="sample_parts.csv">Download 150-part sample</a>
+        <button class="btn btn-primary" type="button" id="dlTemplate" data-i18n="ix.gBlank">Download blank template</button>
+        <a class="btn" href="data/sample_parts.csv" download="sample_parts.csv" data-i18n="ix.gSample">Download 150-part sample</a>
       </div>
-      <h3>Required columns</h3>
+      <h3 data-i18n="ix.gReq">Required columns</h3>
       <table class="grid guide-table"><tbody>
-        <tr><td><code>part_number</code></td><td>Unique part ID</td></tr>
-        <tr><td><code>unit_cost_usd</code></td><td>Unit cost in USD, greater than 0</td></tr>
-        <tr><td><code>lead_time_weeks</code></td><td>Supplier lead time in weeks</td></tr>
-        <tr><td><code>moq</code></td><td>Minimum order quantity, in units</td></tr>
-        <tr><td><code>current_program</code></td><td>Exactly one of <code>VMI</code>, <code>CRP</code>, <code>Kanban</code>, <code>MRP</code></td></tr>
-        <tr><td><code>on_hand_qty</code></td><td>Inventory on hand today, in units</td></tr>
-        <tr><td><code>w01</code> … <code>w26</code></td><td>Weekly demand in units, <code>w01</code> = oldest, <code>w26</code> = most recent. Use 0 for no demand.</td></tr>
+        <tr><td><code>part_number</code></td><td data-i18n="ix.cPn">Unique part ID</td></tr>
+        <tr><td><code>unit_cost_usd</code></td><td data-i18n="ix.cCost">Unit cost in USD, greater than 0</td></tr>
+        <tr><td><code>lead_time_weeks</code></td><td data-i18n="ix.cLt">Supplier lead time in weeks</td></tr>
+        <tr><td><code>moq</code></td><td data-i18n="ix.cMoq">Minimum order quantity, in units</td></tr>
+        <tr><td><code>current_program</code></td><td data-i18n-html="ix.cProg">Exactly one of <code>VMI</code>, <code>CRP</code>, <code>Kanban</code>, <code>MRP</code></td></tr>
+        <tr><td><code>on_hand_qty</code></td><td data-i18n="ix.cOh">Inventory on hand today, in units</td></tr>
+        <tr><td><code>w01</code> … <code>w26</code></td><td data-i18n-html="ix.cW">Weekly demand in units, <code>w01</code> = oldest, <code>w26</code> = most recent. Use 0 for no demand.</td></tr>
       </tbody></table>
-      <h3>Recommended columns</h3>
-      <p class="hint"><code>description</code>, <code>commodity</code>, <code>manufacturer</code>, <code>supplier</code>. They drive the filters, the supplier view, the negotiation list and the rollout waves.</p>
-      <h3>What happens with bad rows</h3>
-      <p class="hint">Parts with a missing lead time, zero cost or no demand in 26 weeks are not dropped silently: they are listed in <b>Data integrity</b> and kept out of the analysis until fixed. An MOQ above 8 weeks of demand is flagged as a warning but still analyzed.</p>
-      <p class="guide-privacy">Your file never leaves this page. Everything is computed in your browser, nothing is uploaded, and reloading the page goes back to the sample data. The site only counts anonymous page views (Cloudflare Web Analytics, no cookies); it never sees your file or results.</p>
+      <h3 data-i18n="ix.gRec">Recommended columns</h3>
+      <p class="hint" data-i18n-html="ix.gRecHint"><code>description</code>, <code>commodity</code>, <code>manufacturer</code>, <code>supplier</code>. They drive the filters, the supplier view, the negotiation list and the rollout waves.</p>
+      <h3 data-i18n="ix.gBad">What happens with bad rows</h3>
+      <p class="hint" data-i18n-html="ix.gBadHint">Parts with a missing lead time, zero cost or no demand in 26 weeks are not dropped silently: they are listed in <b>Data integrity</b> and kept out of the analysis until fixed. An MOQ above 8 weeks of demand is flagged as a warning but still analyzed.</p>
+      <p class="guide-privacy" data-i18n="ix.gPrivacy">Your file never leaves this page. Everything is computed in your browser, nothing is uploaded, and reloading the page goes back to the sample data. The site only counts anonymous page views (Cloudflare Web Analytics, no cookies); it never sees your file or results.</p>
     </div>
   </dialog>
 
   <footer class="footer">
-    <section class="case-study" aria-label="Project case study">
-      <div><h2>Problem</h2><p>Pull programs get decided part by part, from habit or a supplier's pitch, so inventory and stockout risk land wherever the last negotiation left them.</p></div>
-      <div><h2>Approach</h2><p>Segment the whole portfolio by spend, variability and trend, apply one explicit policy anyone can adjust, and size each part's target stock from its own demand.</p></div>
-      <div><h2>Outcome</h2><p>One view of which parts belong in VMI, CRP, Kanban or MRP, the cash and carrying cost it frees, the risk it creates, and a rollout plan by supplier.</p></div>
+    <section class="case-study" aria-label="Project case study" data-i18n-attr="aria-label:ix.caseStudy">
+      <div><h2 data-i18n="ix.problem">Problem</h2><p data-i18n="ix.problemText">Pull programs get decided part by part, from habit or a supplier's pitch, so inventory and stockout risk land wherever the last negotiation left them.</p></div>
+      <div><h2 data-i18n="ix.approach">Approach</h2><p data-i18n="ix.approachText">Segment the whole portfolio by spend, variability and trend, apply one explicit policy anyone can adjust, and size each part's target stock from its own demand.</p></div>
+      <div><h2 data-i18n="ix.outcome">Outcome</h2><p data-i18n="ix.outcomeText">One view of which parts belong in VMI, CRP, Kanban or MRP, the cash and carrying cost it frees, the risk it creates, and a rollout plan by supplier.</p></div>
     </section>
-    <p class="author-bio">Built by <b>Ricardo Vázquez</b>. I have worked supply chain from the plant floor to the system rollout: component planning and purchasing in automotive electronics, and Kinaxis Maestro implementations in pharma, food and aerospace.
-      <a href="https://www.linkedin.com/in/ricardovazquez88" target="_blank" rel="noopener noreferrer">Connect on LinkedIn<span class="sr-only"> (opens in a new tab)</span></a> <span aria-hidden="true">·</span>
-      <a href="https://github.com/andreevazquez/pull-program-fit-analyzer" target="_blank" rel="noopener noreferrer">Project source on GitHub<span class="sr-only"> (opens in a new tab)</span></a>
-      <span aria-hidden="true">·</span> <a href="https://andreevazquez.github.io/mlcc-alternate-finder/" target="_blank" rel="noopener noreferrer">Part out of stock? Find a matching alternate<span class="sr-only"> (opens in a new tab)</span></a></p>
-    <p class="fineprint">Synthetic data. Part numbers, manufacturers and suppliers are fictional. All computation runs in your browser; uploaded files never leave the page. Anonymous visit counts via Cloudflare Web Analytics, no cookies.</p>
+    <p class="author-bio"><span data-i18n-html="ix.bio">Built by <b>Ricardo Vázquez</b>. I have worked supply chain from the plant floor to the system rollout: component planning and purchasing in automotive electronics, and Kinaxis Maestro implementations in pharma, food and aerospace.</span>
+      <a href="https://www.linkedin.com/in/ricardovazquez88" target="_blank" rel="noopener noreferrer"><span data-i18n="ix.connect">Connect on LinkedIn</span><span class="sr-only" data-i18n="ix.newTab"> (opens in a new tab)</span></a> <span aria-hidden="true">·</span>
+      <a href="https://github.com/andreevazquez/pull-program-fit-analyzer" target="_blank" rel="noopener noreferrer"><span data-i18n="ix.srcGithub">Project source on GitHub</span><span class="sr-only" data-i18n="ix.newTab"> (opens in a new tab)</span></a>
+      <span aria-hidden="true">·</span> <a href="https://andreevazquez.github.io/mlcc-alternate-finder/" target="_blank" rel="noopener noreferrer" id="mlccLink"><span data-i18n="ix.mlcc">Part out of stock? Find a matching alternate</span><span class="sr-only" data-i18n="ix.newTab"> (opens in a new tab)</span></a></p>
+    <p class="fineprint" data-i18n="ix.fineprint">Synthetic data. Part numbers, manufacturers and suppliers are fictional. All computation runs in your browser; uploaded files never leave the page. Anonymous visit counts via Cloudflare Web Analytics, no cookies.</p>
   </footer>
   <!-- Cloudflare Web Analytics: anonymous page-view counts, no cookies. It never sees uploaded files or results. --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2a342b9bf8874b93b2075fd289181a4a"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
