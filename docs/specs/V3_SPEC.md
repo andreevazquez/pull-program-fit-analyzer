@@ -21,7 +21,7 @@ Logic in `js/exceptions.js`, checked by `test/exceptions.mjs`. Synthetic data, f
 | Hub contract ending | within `hub_warn_months` | Manager | — |
 | Supplier OTD below target | `otd_pct` < `exc_otd_min`; value = shortages at that supplier | Manager | Supply at risk |
 
-2. **Events**: `data_v3/supply_events.csv`, replaceable by upload.
+2. **Events**: `data/supply_events.csv`, replaceable by upload.
 
 `event_id, event_type, part_number, supplier, announced_date, effective_date, value, detail`
 
@@ -57,4 +57,4 @@ Value kinds are different money and are never added into one total.
 ## Sample values (default policy)
 
 32 events: 29 valid, 3 invalid (EV-030, EV-031, EV-032), 2 below threshold (EV-015, EV-020).
-241 exceptions: 20 Critical, 135 High, 78 Medium, 8 Low; 18 past SLA; 17 need a director.
+157 exceptions: 11 Critical, 42 High, 96 Medium, 8 Low; 18 past SLA; 17 need a director.
