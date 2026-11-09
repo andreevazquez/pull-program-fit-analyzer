@@ -10,12 +10,12 @@
 <style>
   * { box-sizing: border-box; margin: 0; }
   html, body { width: 1200px; height: 627px; overflow: hidden; }
-  body { background: #f9f9f7; color: #0b0b0b; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; padding: 56px 64px; display: grid; grid-template-columns: 1fr 380px; gap: 56px; align-items: center; }
+  body { background: #f9f9f7; color: #0b0b0b; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; padding: 48px 64px; display: grid; grid-template-columns: 1fr 380px; gap: 56px; align-items: center; }
   .maker { color: #4b3fc2; font-size: 18px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.35; }
   .maker-sub { color: #52514e; font-size: 19px; font-weight: 500; margin-top: 4px; }
   h1 { font-size: 56px; line-height: 1.08; letter-spacing: -0.025em; margin-top: 18px; }
   .lede { font-size: 24px; line-height: 1.35; color: #52514e; margin-top: 20px; max-width: 30ch; }
-  .stats { display: flex; gap: 36px; margin-top: 36px; }
+  .stats { display: flex; gap: 36px; margin-top: 30px; }
   .stat b { display: block; font-size: 36px; letter-spacing: -0.02em; }
   .stat span { font-size: 17px; color: #6b6a65; }
   .matrix { display: grid; grid-template-columns: 34px repeat(3, 1fr); gap: 10px; }
@@ -27,6 +27,9 @@
   .crp { background: #fbd9ca; box-shadow: inset 0 -6px 0 #eb6834; }
   .kan { background: #c9ecdf; box-shadow: inset 0 -6px 0 #1baf7a; }
   .mrp { background: #e6e5e1; box-shadow: inset 0 -6px 0 #898781; }
+  .roles { display: flex; gap: 8px; margin-top: 28px; }
+  .roles span { font-size: 16px; font-weight: 600; padding: 6px 12px; border-radius: 999px; border: 1px solid #d6d4cc; color: #52514e; background: #fff; }
+  .roles span.on { background: #4b3fc2; border-color: #4b3fc2; color: #fff; }
   .legend { display: flex; gap: 18px; margin-top: 16px; font-size: 16px; color: #52514e; justify-content: flex-end; }
   .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 </style>
@@ -36,11 +39,12 @@
     <p class="maker">Ricardo Vázquez</p>
     <p class="maker-sub">Supply chain, from the plant floor to the system rollout</p>
     <h1>Which parts belong in VMI, CRP, Kanban or MRP?</h1>
-    <p class="lede">Pull programs are a portfolio decision. Set the policy and see what it does to inventory, cost and risk.</p>
+    <p class="lede">Pull programs are a portfolio decision. One policy, three views: the money, the segmentation, this week's actions.</p>
     <div class="stats">
       <div class="stat"><b>$4.74M → $2.47M</b><span>inventory at target</span></div>
-      <div class="stat"><b>29% → 78%</b><span>spend under pull</span></div>
+      <div class="stat"><b>7.3 → 14.1</b><span>inventory turns</span></div>
     </div>
+    <div class="roles"><span class="on">Executive</span><span>Manager</span><span>Planner</span><span>EN · ES</span></div>
   </div>
   <div>
     <div class="matrix">
