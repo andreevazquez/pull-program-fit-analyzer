@@ -1,6 +1,6 @@
 // V2_SPEC.md sections 1, 3 and 4, plus the executive roll-up (turns, DIO, value pipeline).
 // Pure functions, no DOM. Built on analyze() results; never changes them.
-import { ANALYSIS_DATE, parseDate, addMonths } from "./freshness.js?v=15";
+import { ANALYSIS_DATE, parseDate, addMonths } from "./freshness.js?v=18";
 
 export const V2_DEFAULTS = Object.freeze({
   fc_upside: 1.5,          // forecast flag: avg(f01..f13) ÷ avg(last N actual weeks) above this = upside
@@ -81,7 +81,7 @@ export function pipeline(parts, forecastRows, P) {
   return {
     escalate, watch, covered, noLeadTime, noForecast, upside, downside,
     escalateValue: escValue, watchValue: v(watch),
-    top10Share: escValue ? v(escalate.slice(0, 10)) / escValue : 0,
+    top3Share: escValue ? v(escalate.slice(0, 3)) / escValue : 0,
     checked: parts.length - noForecast.length,
   };
 }
@@ -207,6 +207,27 @@ export function valuePipeline({ result, insights, fresh, pipe, score, opps, P, c
   ];
   const byType = VALUE_TYPES.map((type) => ({ type, value: sum(lines.filter((l) => l.type === type), (l) => l.value), n: lines.filter((l) => l.type === type).length }));
   return { lines, byType };
+}
+
+// How the three cash figures tie together. Excess is gross (only stock above target × tolerance);
+// working capital is net (every part to target, build-ups included); the value pipeline adds the
+// MOQ and LT projects, which lower the target itself.
+//   excess + tolerance band = gross release;  gross release − build-up = working capital;
+//   working capital + MOQ + LT (plant) = value pipeline one-time cash.
+export function cashBridge(result, insights, opps) {
+  const S = result.summary, W = insights.waves;
+  const gross = sum(W, (w) => w.released), build = sum(W, (w) => w.built);
+  const wc = S.inv_now - S.inv_target;
+  return {
+    excess: S.excess,
+    band: gross - S.excess,
+    gross_release: gross,
+    build_up: build,
+    working_capital: wc,
+    moq: opps.moqValue,
+    lt_plant: opps.ltPlantValue,
+    pipeline_cash: wc + opps.moqValue + opps.ltPlantValue,
+  };
 }
 
 export function executive({ result, insights, pipe, score }) {

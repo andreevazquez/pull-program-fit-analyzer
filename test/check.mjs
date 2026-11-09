@@ -9,7 +9,7 @@ import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-const input = parseCSV(readFileSync(join(root, "sample_parts.csv"), "utf8"));
+const input = parseCSV(readFileSync(join(root, "data", "sample_parts.csv"), "utf8"));
 const expected = parseCSV(readFileSync(join(root, "reference", "expected_results.csv"), "utf8"));
 const res = analyze(input, DEFAULT_POLICY);
 const got = new Map(res.parts.map((p) => [p.part_number, resultRow(p)]));

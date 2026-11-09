@@ -1,18 +1,18 @@
-// Checks for js/exceptions.js: the exceptions inbox (data_v3/V3_SPEC.md).
+// Checks for js/exceptions.js: the exceptions inbox (docs/specs/V3_SPEC.md).
 // Usage: node test/exceptions.mjs   (exit code 0 = pass)
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { analyze, clonePolicy } from "../js/segment.js";
-import { insights } from "../js/insights.js?v=15";
-import { freshness } from "../js/freshness.js?v=15";
-import { pipeline, scorecard } from "../js/v2.js?v=15";
-import { exceptions, severityOf, EXC_TYPES, VALUE_KINDS, SEVERITIES } from "../js/exceptions.js?v=15";
+import { insights } from "../js/insights.js?v=18";
+import { freshness } from "../js/freshness.js?v=18";
+import { pipeline, scorecard } from "../js/v2.js?v=18";
+import { exceptions, severityOf, EXC_TYPES, VALUE_KINDS, SEVERITIES } from "../js/exceptions.js?v=18";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => parseCSV(readFileSync(join(root, f), "utf8"));
-const parts = read("sample_parts.csv"), fc = read("data_v2/forecast.csv"), sup = read("data_v2/suppliers.csv"), lots = read("data_v2/inventory_lots.csv"), events = read("data_v3/supply_events.csv");
+const parts = read("data/sample_parts.csv"), fc = read("data/forecast.csv"), sup = read("data/suppliers.csv"), lots = read("data/inventory_lots.csv"), events = read("data/supply_events.csv");
 let failures = 0;
 const check = (label, ok) => { console.log(`  ${ok ? "ok  " : "FAIL"} ${label}`); if (!ok) failures++; };
 
@@ -45,7 +45,7 @@ const done = run("With statuses", null, (id) => (id === "ev:EV-018" ? { status: 
   (c) => "Closed").X;
 
 console.log("Spec values and hand checks:");
-check(`sample: 241 exceptions, 20 critical, 18 past SLA (got ${base.items.length}, ${base.counts.Critical}, ${base.pastSla.length})`, base.items.length === 241 && base.counts.Critical === 20 && base.pastSla.length === 18);
+check(`sample: 157 exceptions, 11 critical, 18 past SLA (got ${base.items.length}, ${base.counts.Critical}, ${base.pastSla.length})`, base.items.length === 157 && base.counts.Critical === 11 && base.pastSla.length === 18);
 check("events: 32 rows, 29 valid, 3 invalid (EV-030 unknown part, EV-031 bad date, EV-032 unknown type)",
   base.events.total === 32 && base.events.valid === 29 && base.events.invalid.map((e) => e.row.event_id).join() === "EV-030,EV-031,EV-032");
 check("below threshold, logged but not raised: EV-015 (8% price), EV-020 (+2 weeks LT)", base.events.belowThreshold.map((e) => e.id).join() === "EV-015,EV-020");

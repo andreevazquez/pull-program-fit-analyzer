@@ -25,15 +25,15 @@
   <meta name="twitter:description" content="Pull programs are a portfolio decision. Segment every part, set the policy, and see the inventory, carrying cost and risk it moves.">
   <meta name="twitter:image" content="https://andreevazquez.github.io/pull-program-fit-analyzer/og-image.png">
   <meta name="twitter:image:alt" content="Pull Program Fit Analyzer: an ABC by XYZ matrix colored by recommended program.">
-  <link rel="stylesheet" href="css/styles.css?v=15">
+  <link rel="stylesheet" href="css/styles.css?v=18">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script type="module" src="js/app.js?v=15"></script>
+  <script type="module" src="js/app.js?v=18"></script>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <p class="maker">Ricardo Vázquez <span class="maker-role">· Supply chain, from the plant floor to the system rollout</span> <span aria-hidden="true">·</span>
+      <p class="maker">Ricardo Vázquez <span class="maker-role"><span class="sep" aria-hidden="true">· </span>Supply chain, from the plant floor to the system rollout</span> <span class="sep" aria-hidden="true">·</span>
         <a href="https://www.linkedin.com/in/ricardovazquez88" target="_blank" rel="noopener noreferrer">LinkedIn<span class="sr-only"> (opens in a new tab)</span></a> <span aria-hidden="true">·</span>
         <a href="https://github.com/andreevazquez/pull-program-fit-analyzer" target="_blank" rel="noopener noreferrer">Source<span class="sr-only"> on GitHub (opens in a new tab)</span></a></p>
       <h1>Pull Program Fit Analyzer</h1>
@@ -65,13 +65,13 @@
       <div class="exec-bar" id="execBar" hidden>
         <div class="seg seg-sub" role="group" aria-label="Executive view">
           <button type="button" data-subview="story" aria-pressed="true">Overview</button>
-          <button type="button" data-subview="sales" aria-pressed="false">Sell-in</button>
+          <button type="button" data-subview="sales" aria-pressed="false">Supplier impact</button>
         </div>
         <p class="hint">For directors and VPs: inventory, service, suppliers and the value pipeline. Follows the manager's Policy.</p>
       </div>
       <section class="story" id="execTop" aria-label="Executive scorecard" hidden></section>
       <section class="story" id="story" aria-label="Story" hidden></section>
-      <section class="story" id="sales" aria-label="Sales: sell-in vs sell-through" hidden></section>
+      <section class="story" id="sales" aria-label="Supplier impact: the suppliers' view of the policy" hidden></section>
       <section id="planner" aria-label="Planner" hidden></section>
 
       <section class="kpis" id="kpis" aria-label="Summary" data-analysis></section>
@@ -97,7 +97,7 @@
       <section class="card" data-analysis>
         <div class="tabs" role="tablist">
           <button role="tab" class="tab" id="tabbtn-parts" data-tab="parts" aria-controls="tab-parts" aria-selected="true" tabindex="0">Parts</button>
-          <button role="tab" class="tab" id="tabbtn-exceptions" data-tab="exceptions" aria-controls="tab-exceptions" aria-selected="false" tabindex="-1">Exceptions <span class="pill" id="excCount"></span></button>
+          <button role="tab" class="tab" id="tabbtn-exceptions" data-tab="exceptions" aria-controls="tab-exceptions" aria-selected="false" tabindex="-1">Exceptions <span class="pill" id="excCount" title="Critical open exceptions, all owners"></span></button>
           <button role="tab" class="tab" id="tabbtn-suppliers" data-tab="suppliers" aria-controls="tab-suppliers" aria-selected="false" tabindex="-1">Suppliers</button>
           <button role="tab" class="tab" id="tabbtn-pipeline" data-tab="pipeline" aria-controls="tab-pipeline" aria-selected="false" tabindex="-1">Pipeline <span class="pill" id="escCount"></span></button>
           <button role="tab" class="tab" id="tabbtn-opps" data-tab="opps" aria-controls="tab-opps" aria-selected="false" tabindex="-1">MOQ &amp; LT</button>
@@ -191,7 +191,7 @@
       </ol>
       <div class="guide-actions">
         <button class="btn btn-primary" type="button" id="dlTemplate">Download blank template</button>
-        <a class="btn" href="sample_parts.csv" download="sample_parts.csv">Download 150-part sample</a>
+        <a class="btn" href="data/sample_parts.csv" download="sample_parts.csv">Download 150-part sample</a>
       </div>
       <h3>Required columns</h3>
       <table class="grid guide-table"><tbody>

@@ -5,11 +5,11 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { analyze, clonePolicy } from "../js/segment.js";
-import { insights } from "../js/insights.js?v=15";
+import { insights } from "../js/insights.js?v=18";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const rows = parseCSV(readFileSync(join(root, "sample_parts.csv"), "utf8"));
+const rows = parseCSV(readFileSync(join(root, "data", "sample_parts.csv"), "utf8"));
 let failures = 0;
 const check = (label, ok) => { console.log(`  ${ok ? "ok  " : "FAIL"} ${label}`); if (!ok) failures++; };
 const near = (a, b, tol = 0.01) => Math.abs(a - b) <= tol;

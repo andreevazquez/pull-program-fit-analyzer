@@ -5,14 +5,14 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { analyze, clonePolicy } from "../js/segment.js";
-import { insights } from "../js/insights.js?v=15";
-import { freshness } from "../js/freshness.js?v=15";
-import { pipeline, projectCoverage, scorecard, opportunities, valuePipeline, executive, VALUE_TYPES } from "../js/v2.js?v=15";
+import { insights } from "../js/insights.js?v=18";
+import { freshness } from "../js/freshness.js?v=18";
+import { pipeline, projectCoverage, scorecard, opportunities, valuePipeline, executive, cashBridge, VALUE_TYPES } from "../js/v2.js?v=18";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => parseCSV(readFileSync(join(root, f), "utf8"));
-const parts = read("sample_parts.csv"), fc = read("data_v2/forecast.csv"), sup = read("data_v2/suppliers.csv"), lots = read("data_v2/inventory_lots.csv");
+const parts = read("data/sample_parts.csv"), fc = read("data/forecast.csv"), sup = read("data/suppliers.csv"), lots = read("data/inventory_lots.csv");
 let failures = 0;
 const check = (label, ok) => { console.log(`  ${ok ? "ok  " : "FAIL"} ${label}`); if (!ok) failures++; };
 const near = (a, b, tol = 0.01) => Math.abs(a - b) <= tol;
@@ -49,7 +49,13 @@ function run(label, tweak) {
   check("turns × DIO = 365", near(E.turns_now * E.dio_now, 365, 1e-6) && near(E.turns_target * E.dio_target, 365, 1e-6));
   check("value pipeline keeps types apart (no grand total)", V.byType.length === VALUE_TYPES.length && !("total" in V));
   check("value pipeline waves = inventory now − target", near(V.lines.slice(0, 3).reduce((t, l) => t + l.value, 0), res.summary.inv_now - res.summary.inv_target, 1));
-  return { pipe, score, opps, E };
+  // Cash bridge: the three one-time cash figures tie out step by step
+  const B = cashBridge(res, I, opps);
+  check("bridge: excess + tolerance band = gross release", near(B.excess + B.band, B.gross_release, 0.01) && B.band >= -0.01);
+  check("bridge: gross release - build-up = net working capital (inventory now - target)", near(B.gross_release - B.build_up, res.summary.inv_now - res.summary.inv_target, 0.01));
+  check("bridge: working capital + MOQ + LT (plant) = value pipeline one-time cash", near(B.pipeline_cash, V.byType.find((t) => t.type === "Cash, one-time").value, 0.01));
+  check("bridge: executive working capital is the bridge's net figure", near(E.working_capital, B.working_capital, 0.01));
+  return { pipe, score, opps, E, B };
 }
 
 const base = run("Default policy");
@@ -70,7 +76,10 @@ check("blank PO week means no PO", one(4, 500, "").escalate.length === 1);
 check("Distribuidor Norte hub contract (2027-03-31) ends within 6 months", base.score.hubEnding.some((g) => g.supplier.startsWith("Distribuidor Norte")));
 
 const S = base.pipe, O = base.opps, E = base.E;
-console.log(`\nSample: escalate ${S.escalate.length} ($${S.escalateValue.toFixed(0)}, top 10 = ${(S.top10Share * 100).toFixed(0)}%), watch ${S.watch.length}, covered ${S.covered.length}, no LT ${S.noLeadTime.length}, upside ${S.upside.length}, downside ${S.downside.length}`);
+console.log(`\nSample: escalate ${S.escalate.length} ($${S.escalateValue.toFixed(0)}, top 3 = ${(S.top3Share * 100).toFixed(0)}%), watch ${S.watch.length}, covered ${S.covered.length}, no LT ${S.noLeadTime.length}, upside ${S.upside.length}, downside ${S.downside.length}`);
 console.log(`MOQ ${O.moq.length} parts $${O.moqValue.toFixed(0)}; LT ${O.lt.length} parts $${O.ltValue.toFixed(0)} (plant $${O.ltPlantValue.toFixed(0)}); turns ${E.turns_now.toFixed(1)} → ${E.turns_target.toFixed(1)}, DIO ${E.dio_now.toFixed(0)} → ${E.dio_target.toFixed(0)}`);
+check(`sample: 12 escalations, 6 Place PO (got ${S.escalate.length}, ${S.watch.length})`, S.escalate.length === 12 && S.watch.length === 6);
+const B = base.B;
+console.log(`Cash bridge: excess $${B.excess.toFixed(0)} + band $${B.band.toFixed(0)} = gross $${B.gross_release.toFixed(0)} - build $${B.build_up.toFixed(0)} = WC $${B.working_capital.toFixed(0)} + MOQ/LT $${(B.moq + B.lt_plant).toFixed(0)} = pipeline $${B.pipeline_cash.toFixed(0)}`);
 console.log(failures ? `\n${failures} check(s) failed` : "\nAll v2 checks passed");
 process.exit(failures ? 1 : 0);

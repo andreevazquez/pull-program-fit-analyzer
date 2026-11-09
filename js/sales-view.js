@@ -1,7 +1,7 @@
-// Sales view: the same parts from the supplier's side. Charts only, one takeaway each,
+// Supplier impact view: the same parts from the supplier's side. Charts only, one takeaway each,
 // headlines computed from sellIn() so they follow the Policy panel live.
-import { theme, legend, axisCat, axisVal, money, opts } from "./story.js?v=15";
-import { esc, fmtM, fmtPct, plain } from "./format.js?v=15";
+import { theme, legend, axisCat, axisVal, money, opts } from "./story.js?v=18";
+import { esc, fmtM, fmtPct, plain } from "./format.js?v=18";
 
 const charts = new Map();
 const pct = fmtPct;
@@ -29,7 +29,7 @@ export function renderSales(container, result, P, X, ctx = {}) {
   const s = result.analyzed;
   if (!s.length) {
     destroySales();
-    container.innerHTML = `<div class="card"><p class="hint">Load a CSV to see the sales view.</p></div>`;
+    container.innerHTML = `<div class="card"><p class="hint">Load a CSV to see the supplier impact view.</p></div>`;
     return;
   }
   const t = theme();
@@ -57,33 +57,20 @@ export function renderSales(container, result, P, X, ctx = {}) {
       ${id ? `<div class="story-chart"><canvas id="${id}" role="img" aria-label="${esc(plain(headline))}"></canvas></div>` : ""}${body}
     </article>`;
 
-  const mapping = `<div class="table-wrap story-table"><table class="grid sales-map">
-      <thead><tr><th>In this plant</th><th>For a brand selling into retail or distribution</th></tr></thead>
-      <tbody>
-        <tr><td>Plant consumption</td><td>Sell-out at the shelf (POS)</td></tr>
-        <tr><td>Stock the plant holds</td><td>Channel inventory at the retailer or distributor</td></tr>
-        <tr><td>What suppliers ship</td><td>Sell-in</td></tr>
-        <tr><td>Destock to target days of supply</td><td>Retailer cutting weeks of cover; quarter-end loading unwinding</td></tr>
-        <tr><td>VMI / CRP with suppliers</td><td>VMI / CRP with key accounts, replenished from POS</td></tr>
-        <tr><td>Consignment</td><td>Revenue recognized at sell-out instead of at shipment</td></tr>
-      </tbody></table></div>
-    <p class="hint sales-cta">Bring sell-in, sell-out and channel stock by account and SKU, and this view is measured instead of modeled: weeks of cover by account, where shipments ran ahead of the shelf, and how much sell-in is already sitting in the channel.
-      <a href="https://www.linkedin.com/in/ricardovazquez88" target="_blank" rel="noopener noreferrer">Let's talk on LinkedIn<span class="sr-only"> (opens in a new tab)</span></a></p>`;
-
   container.innerHTML = `
     <div class="story-toolbar">
-      <p class="hint">The same parts, seen by the suppliers' sales teams. The plant's consumption is their sell-through and its stock is their channel inventory. Follows Policy → Sales view.</p>
+      <p class="hint">The same parts, seen by the suppliers' sales teams. Supplier's view: <b>sell-through</b> = what this plant consumes; <b>sell-in</b> = what suppliers ship to it; the plant's stock is their channel inventory. Follows Policy → Supplier impact.</p>
       <div class="story-actions"><button type="button" class="btn" data-act="present">Present</button></div>
     </div>
     <div class="story-hero">
-      ${hero("Sell-through", `${fmtM(T.through_week)}<span class="unit">/wk</span>`, `${fmtM(T.through_annual)} a year of plant consumption`)}
+      ${hero("Supplier sell-through", `${fmtM(T.through_week)}<span class="unit">/wk</span>`, `${fmtM(T.through_annual)} a year of plant consumption`)}
       ${hero("Stock at the customer", `${wk(T.cover_now)}<span class="arrow">→</span>${wk(T.cover_target)}<span class="unit">wks</span>`, `${fmtM(T.inv_now)} → ${fmtM(T.inv_target)} at the recommended policy`)}
-      ${hero(`Sell-in, next ${firstD} weeks`, `${T.dip_window_pct < 0 ? "−" : "+"}${pct(Math.abs(T.dip_window_pct))}`, `vs sell-through: ${fmtM(Math.abs(T.dip_window))} ${T.dip_window < 0 ? "less" : "more"} while the plant destocks`, "dip")}
-      ${hero("Back to run-rate", T.recover_week <= H ? `Week ${T.recover_week}` : `> ${H} wks`, "sell-in within 1% of sell-through")}
+      ${hero(`Supplier sell-in, next ${firstD} weeks`, `${T.dip_window_pct < 0 ? "−" : "+"}${pct(Math.abs(T.dip_window_pct))}`, `vs sell-through: ${fmtM(Math.abs(T.dip_window))} ${T.dip_window < 0 ? "less" : "more"} while the plant destocks`, "dip")}
+      ${hero("Back to run-rate", T.recover_week <= H ? `Week ${T.recover_week}` : `> ${H} wks`, "supplier sell-in within 1% of sell-through")}
       ${hero("Consignment", P.consignment ? fmtM(T.consignment) : "Off", "VMI stock suppliers would own; revenue moves to consumption", "consign")}
     </div>
     <div class="story-grid">
-      ${card("Sell-in vs sell-through",
+      ${card("Supplier's view: sell-in vs sell-through",
         `Sell-in runs ${pct(Math.abs(T.dip_window_pct))} ${T.dip_window_pct < 0 ? "below" : "above"} sell-through for ${firstD} weeks while the plant works off ${fmtM(T.dip)} of stock`,
         `Consumption does not change: ${fmtM(T.through_week)} a week. What changes is how much stock the plant keeps, so suppliers ship less until each part reaches target, and sell-in is back at run-rate by ${recoverTxt}. Parts below target pull ${fmtM(T.build)} forward. The last 26 weeks are actual consumption; shipment history is not in the file, so sell-in is projected (destock over ${plural(D, "week")} in Policy).`,
         "slFlow", { wide: true })}
@@ -91,7 +78,7 @@ export function renderSales(container, result, P, X, ctx = {}) {
         `${esc(worst.supplier)} takes the largest hit: ${fmtM(-worst.net)} less sell-in over ${H} weeks (−${pct(Math.abs(worst.change))})`,
         `${plural(down.length, "supplier")} of ${X.suppliers.length} ship less over the next ${H} weeks; ${plural(up.length, "supplier")} ship more because the plant runs below target on their parts. Click a bar to see the parts behind it.`,
         "slSup") : ""}
-      ${card("Sell-in already in the channel",
+      ${card("Supplier's view: sell-in already in the channel",
         `The plant holds ${wk(T.cover_now)} weeks of sell-through today; the policy targets ${wk(T.cover_target)}`,
         mostCover ? `${esc(mostCover.supplier)} sits deepest at ${wk(mostCover.cover_now)} weeks of cover. Stock above target is revenue suppliers already booked: it will not repeat as sell-in.` : "",
         "slCover")}
@@ -99,10 +86,6 @@ export function renderSales(container, result, P, X, ctx = {}) {
         `${fmtM(T.ramp)} of annual sell-through is ramping and ${fmtM(T.declining)} is declining`,
         `${topRamp?.ramp > 0 ? `${esc(topRamp.supplier)} has the most ramping volume. ` : ""}The analysis keeps these parts in MRP until demand settles; for a sales team they are the accounts to grow and the ones to protect.`,
         "slTrend", { wide: true }) : ""}
-      ${card("Same logic, any channel",
-        "Sell-in = sell-through ± the change in channel stock",
-        "Nothing here is specific to electronics. Any business that sells through someone else's stock has the same three numbers, and the same gap between them.",
-        "", { wide: true, body: mapping })}
     </div>`;
 
   const pick = (list) => (i) => ctx.filterSupplier?.(list[i].supplier);
@@ -116,7 +99,7 @@ export function renderSales(container, result, P, X, ctx = {}) {
     data: {
       labels,
       datasets: [
-        { type: "bar", label: "Projected sell-in (supplier shipments)", data: pad(X.sellin, nh, 0), backgroundColor: accent, borderRadius: 3, borderSkipped: "start", barPercentage: 0.8, categoryPercentage: 0.9, order: 2 },
+        { type: "bar", label: "Supplier sell-in (projected shipments)", data: pad(X.sellin, nh, 0), backgroundColor: accent, borderRadius: 3, borderSkipped: "start", barPercentage: 0.8, categoryPercentage: 0.9, order: 2 },
         { type: "line", label: "Sell-through (plant consumption)", data: [...hist, ...X.through], borderColor: t.ink2, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0, order: 1,
           segment: { borderDash: (c) => (c.p0DataIndex >= nh - 1 ? [5, 4] : undefined) } },
       ],
@@ -139,7 +122,7 @@ export function renderSales(container, result, P, X, ctx = {}) {
     type: "bar",
     data: {
       labels: supChart.map((g) => g.supplier),
-      datasets: [{ label: `Sell-in vs sell-through, next ${H} weeks`, data: supChart.map((g) => g.net),
+      datasets: [{ label: `Supplier sell-in vs sell-through, next ${H} weeks`, data: supChart.map((g) => g.net),
         backgroundColor: supChart.map((g) => (g.net < 0 ? accent : t.muted)), borderRadius: 4, borderSkipped: false, barPercentage: 0.7 }],
     },
     options: opts({

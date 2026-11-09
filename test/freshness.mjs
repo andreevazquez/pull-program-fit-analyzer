@@ -4,12 +4,12 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { analyze, clonePolicy } from "../js/segment.js";
-import { freshness, parseDateCode, isoWeeksInYear, addMonths, parseDate, iso } from "../js/freshness.js?v=15";
+import { freshness, parseDateCode, isoWeeksInYear, addMonths, parseDate, iso } from "../js/freshness.js?v=18";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => parseCSV(readFileSync(join(root, f), "utf8"));
-const parts = read("sample_parts.csv"), lots = read("data_v2/inventory_lots.csv"), suppliers = read("data_v2/suppliers.csv");
+const parts = read("data/sample_parts.csv"), lots = read("data/inventory_lots.csv"), suppliers = read("data/suppliers.csv");
 let failures = 0;
 const check = (label, ok) => { console.log(`  ${ok ? "ok  " : "FAIL"} ${label}`); if (!ok) failures++; };
 

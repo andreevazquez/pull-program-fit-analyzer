@@ -1,14 +1,14 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=15";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=15";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=15";
-import { exportDeck, canvasPng } from "./deck.js?v=15";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=15";
-import { sellIn } from "./sales.js?v=15";
-import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=15";
-import { pipeline, scorecard, opportunities, valuePipeline, executive, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=15";
-import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions } from "./layers.js?v=15";
-import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=15";
-import { renderSales, destroySales } from "./sales-view.js?v=15";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=18";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=18";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=18";
+import { exportDeck, canvasPng } from "./deck.js?v=18";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=18";
+import { sellIn } from "./sales.js?v=18";
+import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=18";
+import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=18";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions } from "./layers.js?v=18";
+import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=18";
+import { renderSales, destroySales } from "./sales-view.js?v=18";
 
 /* ---------------- state ---------------- */
 const VIEW_HASH = { "#story": "story", "#exec": "story", "#sales": "sales", "#planner": "planner" };
@@ -75,7 +75,7 @@ function showNotice(html, kind = "error") {
 async function loadSample() {
   let text;
   try {
-    const res = await fetch("sample_parts.csv", { cache: "no-cache" });
+    const res = await fetch("data/sample_parts.csv", { cache: "no-cache" });
     if (!res.ok) throw new Error(res.status);
     text = await res.text();
   } catch {
@@ -101,6 +101,7 @@ function recompute() {
     state.score = scorecard(state.result, state.suppliersV2, state.fresh, P, cs);
     state.opps = opportunities(state.result, P);
     state.value = valuePipeline({ result: state.result, insights: state.insights, fresh: state.fresh, pipe: state.pipe, score: state.score, opps: state.opps, P, claimStatus: cs });
+    state.bridge = cashBridge(state.result, state.insights, state.opps);
     state.exec = executive({ result: state.result, insights: state.insights, pipe: state.pipe, score: state.score });
     state.exc = exceptions({ result: state.result, insights: state.insights, pipe: state.pipe, fresh: state.fresh, score: state.score, events: state.events, P, claimStatus: cs, statusOf: (id) => state.excStatus.get(id) });
     renderAll();
@@ -166,7 +167,7 @@ function renderKPIs() {
     kpi("Annual spend", fmtM(S.annual_spend), `${S.super_a} Super A parts carry ${fmtPct(state.policy.super_a)} of it`),
     kpi("Inventory now → target", `${fmtM(S.inv_now)}<span class="arrow">→</span>${fmtM(S.inv_target)}`,
       `<span class="delta-down">${invDelta <= 0 ? "−" : "+"}${fmtPct(Math.abs(invDelta))}</span> at recommended policy`),
-    kpi("Excess (right-sizing)", fmtM(S.excess), `On hand above target × ${tol.toFixed(2)}`, "excess"),
+    kpi("Excess (gross)", fmtM(S.excess), `Above target × ${tol.toFixed(2)} · net working capital ${fmtM(state.bridge.working_capital)} after build-ups`, "excess"),
     kpi("Carrying cost avoided", `${fmtM(state.insights.carrying.avoided)}<span class="arrow">/yr</span>`,
       `Recurring P&L at ${fmtPct(state.policy.carrying_rate)} carrying rate`, "excess"),
     kpi("Consignment transfer", state.policy.consignment ? fmtM(S.consignment) : "Off",
@@ -422,7 +423,7 @@ const CLAIM_STATUSES = ["Open", "Escalated", "Closed"];
 const parseCsvText = (text) => Papa.parse(text, { header: true, skipEmptyLines: "greedy", transformHeader: (h) => h.trim().toLowerCase() });
 
 async function loadV2() {
-  const get = async (f) => { const r = await fetch(`data_v2/${f}`, { cache: "no-cache" }); if (!r.ok) throw new Error(r.status); return r.text(); };
+  const get = async (f) => { const r = await fetch(`data/${f}`, { cache: "no-cache" }); if (!r.ok) throw new Error(r.status); return r.text(); };
   try {
     const [lots, sup, fc] = await Promise.all([get("inventory_lots.csv"), get("suppliers.csv"), get("forecast.csv")]);
     state.forecast = parseCsvText(fc).data; state.forecastLabel = "forecast.csv (sample)";
@@ -430,7 +431,7 @@ async function loadV2() {
     state.suppliersV2 = parseCsvText(sup).data; state.suppliersLabel = "suppliers.csv (sample)";
   } catch { /* freshness tab explains how to upload */ }
   try {
-    const r = await fetch("data_v3/supply_events.csv", { cache: "no-cache" });
+    const r = await fetch("data/supply_events.csv", { cache: "no-cache" });
     if (r.ok) { state.events = parseCsvText(await r.text()).data; state.eventsLabel = "supply_events.csv (sample)"; }
   } catch { /* exceptions tab explains how to upload */ }
   if (state.result) recompute();
@@ -548,7 +549,7 @@ function renderV2Tabs() {
 
 function drawExecTop() {
   if (!state.result) return;
-  $("#execTop").innerHTML = renderExecTop({ E: state.exec, V: state.value, pipe: state.pipe, score: state.score, S: state.result.summary, P: state.policy, X: state.exc });
+  $("#execTop").innerHTML = renderExecTop({ E: state.exec, V: state.value, pipe: state.pipe, score: state.score, S: state.result.summary, P: state.policy, X: state.exc, B: state.bridge });
 }
 
 function drawPlanner() {
@@ -843,7 +844,7 @@ const POLICY_GROUPS = [
     { path: "sla_medium_days", label: "SLA Medium", hint: "days", step: 1, min: 0, int: true },
     { path: "sla_low_days", label: "SLA Low", hint: "days", step: 1, min: 0, int: true },
   ] },
-  { title: "Sales view", fields: [
+  { title: "Supplier impact", fields: [
     { path: "destock_weeks", label: "Plant reaches target stock in", hint: "weeks; sets the sell-in dip", step: 1, min: 1, int: true },
     { path: "sales_horizon_weeks", label: "Sell-in projection", hint: "weeks ahead", step: 1, min: 4, max: 52, int: true },
   ] },
@@ -1150,7 +1151,7 @@ function storyKpis() {
   return [
     { label: "Spend under pull programs", value: `${fmtPct(S.pull_share_now)} → ${fmtPct(S.pull_share_rec)}`, sub: "today vs recommended" },
     { label: "Inventory", value: `${fmtM(S.inv_now)} → ${fmtM(S.inv_target)}`, sub: `${d <= 0 ? "−" : "+"}${fmtPct(Math.abs(d))} at the recommended policy` },
-    { label: "Excess to right-size", value: fmtM(S.excess), sub: `one-time cash, above target × ${P.tolerance.toFixed(2)}`, accent: "006300" },
+    { label: "Excess (gross)", value: fmtM(S.excess), sub: `above target × ${P.tolerance.toFixed(2)}; net of build-ups ${fmtM(S.inv_now - S.inv_target)}`, accent: "006300" },
     { label: "Carrying cost avoided", value: `${fmtM(C.avoided)}/yr`, sub: `recurring P&L at ${fmtPct(C.rate)}`, accent: "006300" },
     { label: "Consignment transfer", value: P.consignment ? fmtM(S.consignment) : "Off", sub: "ownership to suppliers, not a saving", accent: "2A78D6" },
   ];
@@ -1252,3 +1253,18 @@ window.addEventListener("hashchange", () => { const v = VIEW_HASH[location.hash]
 buildPolicyForm();
 loadSample();
 loadV2();
+
+// Phone layout: tables with many columns read as stacked cards below 640px (css: table.grid.stacked).
+// Each cell gets its column name as data-label; tables whose rows don't line up with the header keep scrolling.
+function stackTables() {
+  for (const t of document.querySelectorAll("table.grid:not(.cov13):not(.guide-table):not(.bridge)")) {
+    const heads = [...t.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+    const rows = [...t.querySelectorAll("tbody tr")];
+    const fits = heads.length >= 4 && rows.every((r) => r.cells.length === heads.length || r.cells.length === 1);
+    t.classList.toggle("stacked", fits);
+    if (fits) for (const r of rows) [...r.cells].forEach((c, i) => { if (r.cells.length > 1) c.dataset.label = heads[i] || ""; });
+  }
+}
+let stackQueued = false;
+new MutationObserver(() => { if (!stackQueued) { stackQueued = true; requestAnimationFrame(() => { stackQueued = false; stackTables(); }); } })
+  .observe(document.body, { childList: true, subtree: true });

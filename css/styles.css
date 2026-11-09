@@ -122,7 +122,7 @@ tr.clickable:focus-visible, th.sortable:focus-visible { outline: 2px solid var(-
 .kpi.aging { box-shadow: inset 3px 0 0 var(--warn-fill); }
 .fresh-src { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
 .fresh-src .muted { font-size: 12px; margin-right: auto; }
-.fresh-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 4px; }
+.fresh-kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 4px; }
 .grid tr.closed td { color: var(--muted); }
 .grid td.nowrap { white-space: nowrap; }
 .grid select { font: inherit; font-size: 12px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 2px 4px; }
@@ -283,9 +283,6 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
 .hero .sub { font-size: 12px; color: var(--muted); }
 .hero.excess { box-shadow: inset 3px 0 0 var(--good); }
 .hero.dip { box-shadow: inset 3px 0 0 var(--accent); }
-.sales-map td:first-child { color: var(--ink-2); white-space: nowrap; }
-.sales-cta { margin-top: 10px; }
-.sales-cta a { color: var(--accent); font-weight: 600; }
 .hero.consign { box-shadow: inset 3px 0 0 var(--vmi); }
 .story-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .story-card { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
@@ -375,7 +372,8 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
   .filters select { flex: 1 1 45%; max-width: none; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .topbar { position: static; }
-  .maker-role { display: block; }
+  .maker-role { display: block; margin: 2px 0; }
+  .maker-role .sep, .maker-role + .sep { display: none; }
   .hero .value { font-size: 20px; }
   .story-card .headline { font-size: 16px; }
   .story-chart, .story-card.wide .story-chart { height: 240px; }
@@ -435,3 +433,22 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
 .exc-repeat { align-items: start; }
 .exc-list { margin: 0 0 12px; padding-left: 0; list-style: none; }
 .exc-list li { padding: 6px 0; border-bottom: 1px solid var(--border); }
+
+/* ---------- phone: wide tables as stacked cards (js/app.js stackTables) ---------- */
+@media (max-width: 640px) {
+  table.grid.stacked thead { display: none; }
+  table.grid.stacked, table.grid.stacked tbody, table.grid.stacked tr, table.grid.stacked td { display: block; width: auto; }
+  table.grid.stacked tr { padding: 8px 0; border-bottom: 1px solid var(--border); }
+  table.grid.stacked td { border: 0; padding: 2px 10px; text-align: right; min-width: 0; max-width: none; white-space: normal; overflow: hidden; }
+  table.grid.stacked td::before { content: attr(data-label); float: left; width: 40%; padding-right: 8px; text-align: left; color: var(--muted); font-size: 11px; font-weight: 400; line-height: 18px; }
+  table.grid.stacked td[data-label=""]::before { content: none; }
+  table.grid.stacked td[data-label=""], table.grid.stacked td:first-child { text-align: left; }
+  table.grid.stacked td:first-child { font-size: 13px; padding-bottom: 4px; }
+  table.grid.stacked td:first-child::before { content: none; }
+  table.grid.stacked td.detail, table.grid.stacked td.reason { display: block; text-align: left; }
+  table.grid.stacked td.detail::before, table.grid.stacked td.reason::before { display: block; float: none; width: auto; margin-bottom: 2px; }
+  table.grid.stacked td.pn { white-space: normal; }
+  table.grid.stacked td > div { text-align: inherit; }
+  table.grid.stacked tr.past-sla td:first-child { box-shadow: none; }
+  table.grid.stacked tr.past-sla { box-shadow: inset 3px 0 0 var(--crit); }
+}

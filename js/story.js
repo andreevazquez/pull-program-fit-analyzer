@@ -1,8 +1,8 @@
 // Story view: charts only, one takeaway per chart, for steering meetings.
 // Every headline is computed from the current result, so it follows the Policy panel.
-import { PROGRAMS } from "./segment.js?v=15";
-import { SCENARIO_ROWS } from "./insights.js?v=15";
-import { esc, fmtM, fmtPct, plain } from "./format.js?v=15";
+import { PROGRAMS } from "./segment.js?v=18";
+import { SCENARIO_ROWS } from "./insights.js?v=18";
+import { esc, fmtM, fmtPct, plain } from "./format.js?v=18";
 
 const charts = new Map();
 
@@ -168,7 +168,7 @@ export function renderStory(container, result, P, ins, ctx = {}) {
     <div class="story-hero">
       ${hero("Spend under pull programs", `${pct(S.pull_share_now)}<span class="arrow">→</span>${pct(S.pull_share_rec)}`, "today vs recommended")}
       ${hero("Inventory", `${fmtM(S.inv_now)}<span class="arrow">→</span>${fmtM(S.inv_target)}`, `${sign(invDelta)}${pct(Math.abs(invDelta))} at the recommended policy`)}
-      ${hero("Excess to right-size", fmtM(S.excess), `one-time cash, above target × ${P.tolerance.toFixed(2)}`, "excess")}
+      ${hero("Excess (gross)", fmtM(S.excess), `above target × ${P.tolerance.toFixed(2)}; net of build-ups ${fmtM(S.inv_now - S.inv_target)}`, "excess")}
       ${hero("Carrying cost avoided", `${fmtM(C.avoided)}<span class="unit">/yr</span>`, `P&L, at ${pct(C.rate)} carrying rate`, "excess")}
       ${hero("Consignment transfer", P.consignment ? fmtM(S.consignment) : "Off", "ownership moves to suppliers, not a saving", "consign")}
     </div>
@@ -183,7 +183,7 @@ export function renderStory(container, result, P, ins, ctx = {}) {
         "stMix")}
       ${card("What it does to inventory",
         `Inventory ${invDelta <= 0 ? "falls" : "rises"} from ${fmtM(S.inv_now)} to ${fmtM(S.inv_target)} (${sign(invDelta)}${pct(Math.abs(invDelta))})`,
-        `Overstocked parts give back ${fmtM(over)}; understocked parts need ${fmtM(under)} more. The actionable right-sizing, stock above target × ${P.tolerance.toFixed(2)}, is ${fmtM(S.excess)}.`,
+        `Overstocked parts give back ${fmtM(over)}; understocked parts need ${fmtM(under)} more. Net, that is ${fmtM(S.inv_now - S.inv_target)} of working capital. The gross excess, stock above target × ${P.tolerance.toFixed(2)}, is ${fmtM(S.excess)}: what to push out or cancel first.`,
         "stBridge")}
       ${card("What finance will see",
         `Reaching target avoids ${fmtM(C.avoided)} a year in carrying cost`,
@@ -432,5 +432,5 @@ export function storyCards(container) {
   }));
 }
 
-// Shared with the Sales view (js/sales-view.js), so both read as one system.
+// Shared with the Supplier impact view (js/sales-view.js), so both read as one system.
 export { theme, legend, axisCat, axisVal, money, opts, barLabels };

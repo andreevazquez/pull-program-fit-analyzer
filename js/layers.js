@@ -1,8 +1,8 @@
 // Role layers. Executive: the portfolio in money, service and plan. Planner: what to do this week,
 // part by part. Also the Manager tabs added in v2 (pipeline coverage, supplier scorecard, MOQ & LT).
 // Render functions return HTML strings; js/app.js wires events. No computation beyond presentation.
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=15";
-import { VALUE_TYPES } from "./v2.js?v=15";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=18";
+import { VALUE_TYPES } from "./v2.js?v=18";
 
 const PVAR = { VMI: "--vmi", CRP: "--crp", Kanban: "--kanban", MRP: "--mrp" };
 const badge = (prog) => (prog ? `<span class="badge" style="--c: var(${PVAR[prog] || "--mrp"})">${esc(prog)}</span>` : `<span class="muted">—</span>`);
@@ -16,7 +16,7 @@ const plural = (n, one, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 const TYPE_CLS = { "Cash, one-time": "t-cash", "P&L, per year": "t-pl", Recovery: "t-rec", "Ownership transfer": "t-own", "Risk to manage": "t-risk" };
 
 /* ================= Executive ================= */
-export function renderExecTop({ E, V, pipe, score, S, P, X }) {
+export function renderExecTop({ E, V, pipe, score, S, P, X, B }) {
   const typeRows = VALUE_TYPES.map((type) => {
     const lines = V.lines.filter((l) => l.type === type);
     const sub = V.byType.find((t) => t.type === type);
@@ -30,7 +30,7 @@ export function renderExecTop({ E, V, pipe, score, S, P, X }) {
     <div class="story-hero exec-hero">
       ${hero("Inventory turns", `${fmtN(E.turns_now, 1)}${arrow}${fmtN(E.turns_target, 1)}`, "annual material spend ÷ inventory, now vs target")}
       ${hero("Days of inventory", `${fmtN(E.dio_now, 0)}${arrow}${fmtN(E.dio_target, 0)}<span class="unit">days</span>`, `${fmtM(S.inv_now)} → ${fmtM(S.inv_target)}`)}
-      ${hero("Working capital to release", fmtM(E.working_capital), `one-time cash; plus ${fmtM(E.carrying_avoided)}/yr carrying cost`, "excess")}
+      ${hero("Net working capital to release", fmtM(E.working_capital), `now − target, net of build-ups · gross excess ${fmtM(S.excess)}`, "excess")}
       ${hero("Service risk", `${E.escalations}<span class="unit">parts</span>`, `short inside lead time · ${fmtM(E.escalation_value)}`, "risk")}
       ${hero("Pull, VMI, EDI", `${fmtPct(E.pull_now)}${arrow}${fmtPct(E.pull_rec)}`, `spend under pull · VMI ${fmtPct(E.vmi_now)} → ${fmtPct(E.vmi_rec)} · EDI ${fmtPct(E.edi, 1)}`)}
     </div>
@@ -41,11 +41,12 @@ export function renderExecTop({ E, V, pipe, score, S, P, X }) {
         <p class="hint">Every initiative from the analysis, with owner, timing and status. Types are kept apart on purpose: cash, P&L, claim recovery, ownership transfer and risk are different money and are never added into one number. Click a line to open the detail.</p>
         <div class="table-wrap story-table"><table class="grid vp"><thead><tr><th>Initiative</th><th>Owner</th><th>When</th><th>Status</th><th class="n">Value</th></tr></thead>
           <tbody>${typeRows}</tbody></table></div>
+        ${B ? cashBridgeTable(B, P) : ""}
       </article>
       ${X ? renderExecExceptions(X) : ""}
       <article class="card story-card">
         <div class="story-card-head"><div class="eyebrow">Will we ship?</div></div>
-        <h2 class="headline">${pipe.escalate.length ? `${plural(pipe.escalate.length, "part")} run short inside their lead time; the top 10 carry ${fmtPct(pipe.top10Share)} of the ${fmtM(pipe.escalateValue)} at risk` : "No part runs short inside its lead time"}</h2>
+        <h2 class="headline">${pipe.escalate.length ? `${plural(pipe.escalate.length, "part")} run short inside their lead time; the top 3 carry ${fmtPct(pipe.top3Share)} of the ${fmtM(pipe.escalateValue)} at risk` : "No part runs short inside its lead time"}</h2>
         <p class="hint">On hand plus the open PO, against the next 13 weeks of forecast. A shortage inside the lead time cannot be fixed with a normal PO: it needs expediting or an allocation call.${top ? ` Largest: ${esc(top.part.part_number)} (${esc(top.part.supplier)}), short from week ${top.first_short_week}, ${fmtM(top.short_value)}.` : ""} Another ${plural(pipe.watch.length, "part")} go short later and only need a PO now. Forecast is ${pipe.upside.length} up and ${pipe.downside.length} down against history.</p>
         <p class="exec-link"><a href="#planner" data-goto="planner:escalations">Open the planners' escalation list</a></p>
       </article>
@@ -56,6 +57,22 @@ export function renderExecTop({ E, V, pipe, score, S, P, X }) {
         <p class="exec-link"><a href="#" data-goto="analysis:suppliers">Open the supplier scorecard</a></p>
       </article>
     </div>`;
+}
+
+// Reconciliation of the three cash figures shown across the app (v2.js cashBridge).
+export function cashBridgeTable(B, P) {
+  const row = (op, label, v, note, cls = "") => `<tr class="${cls}"><td class="nowrap">${op}</td><td>${label}</td><td class="n">${fmtM(v)}</td><td class="muted small">${note}</td></tr>`;
+  return `<h3>How the cash numbers tie</h3>
+    <p class="hint">Three one-time cash figures appear in the app. They are not competing estimates; each adds one step to the one before.</p>
+    <div class="table-wrap story-table"><table class="grid bridge"><thead><tr><th></th><th>Step</th><th class="n">Value</th><th>What it is</th></tr></thead><tbody>
+      ${row("", "<b>Excess</b> (Manager, Planner)", B.excess, `stock above target × ${P.tolerance.toFixed(2)}: the part to push out or cancel first`)}
+      ${row("+", "Tolerance band", B.band, "stock between target and the tolerance on overstocked parts")}
+      ${row("=", "Gross release", B.gross_release, "every overstocked part brought to target", "sub")}
+      ${row("−", "Build-up", B.build_up, "stock to buy for parts below target")}
+      ${row("=", "<b>Net working capital</b> (Executive)", B.working_capital, "inventory now − target; the Wave 1–3 lines of the value pipeline", "sub")}
+      ${row("+", "MOQ and LT projects", B.moq + B.lt_plant, "lower the target itself; need supplier negotiation")}
+      ${row("=", "<b>Value pipeline, one-time cash</b>", B.pipeline_cash, "subtotal above", "sub")}
+    </tbody></table></div>`;
 }
 
 /* ================= Planner ================= */
@@ -80,7 +97,7 @@ export function plannerActions({ result, insights, pipe, fresh }) {
     map.set(p.part_number, g);
   };
   const W = Object.fromEntries(ACTIONS.map((a, i) => [a.key, (ACTIONS.length - i) * 1e12]));
-  for (const r of pipe.escalate) add(r.part, "expedite", `Short from week ${r.first_short_week}, inside a ${r.lt}-week lead time: ${fmtN(r.short_qty)} units (${fmtM(r.short_value)})${r.po_week ? `; open PO ${fmtN(r.po_qty)} due week ${r.po_week}` : "; no open PO"}`, W.expedite + (r.short_value || 0));
+  for (const r of pipe.escalate) add(r.part, "expedite", `Short from week ${r.first_short_week}, inside the ${r.lt}-week lead time: ${fmtN(r.short_qty)} units (${fmtM(r.short_value)})${r.po_week ? `; open PO ${fmtN(r.po_qty)} due week ${r.po_week}` : "; no open PO"}`, W.expedite + (r.short_value || 0));
   for (const p of result.parts) if (p.blocking || p.issues.length) add(p, "fix", p.issues.join("; "), W.fix);
   for (const l of fresh?.invalid || []) { const p = result.parts.find((x) => x.part_number === l.part_number); if (p) add(p, "fix", `Lot ${l.lot_id}: ${l.errors.join("; ")}`, W.fix); }
   for (const r of insights.critical) add(r.part, "build", `On hand ${fmtN(r.part.on_hand_qty)} < safety stock ${fmtN(r.safety)}; build ${fmtN(r.build_qty)} to target`, W.build + (r.build_value || 0));
@@ -88,7 +105,17 @@ export function plannerActions({ result, insights, pipe, fresh }) {
   for (const c of fresh?.claimable || []) { const p = result.parts.find((x) => x.part_number === c.part_number); if (p) add(p, "claim", `Lot ${c.lot_id}, date code ${c.date_code}: ${fmtN(c.age_receipt, 1)} months old at receipt vs a ${c.rule}-month rule`, W.claim + (c.value || 0)); }
   for (const r of [...pipe.upside, ...pipe.downside]) add(r.part, "forecast", `Next 13 weeks average ${fmtN(r.fc_avg)} vs ${fmtN(r.hist_avg)} actual (${Number.isFinite(r.fc_ratio) ? `${fmtN(r.fc_ratio, 2)}×` : "no history"}): confirm with the customer`, W.forecast);
   for (const l of fresh?.aging || []) { const p = result.parts.find((x) => x.part_number === l.part_number); if (p) add(p, "aging", `Lot ${l.lot_id} passed its ${l.rule}-month rule on ${l.expires}: consume first or reserve`, W.aging + (l.value || 0)); }
-  for (const p of result.analyzed) if (p.excess_value > 0) add(p, "excess", `${fmtM(p.excess_value)} above target × tolerance: push out or cancel open orders`, W.excess + p.excess_value);
+  // Excess is measured on today's stock against the 26-week average; a shortage comes from the 13-week
+  // forecast. When a part has both, say which is when, so nobody cancels the order that covers the shortage.
+  const short = new Map([...pipe.escalate, ...pipe.watch].map((r) => [r.part.part_number, r]));
+  for (const p of result.analyzed) {
+    if (!(p.excess_value > 0)) continue;
+    const r = short.get(p.part_number);
+    const detail = r
+      ? `Timing split: on hand covers ${fmtN(p.on_hand_qty / Math.max(1e-9, r.fc_avg), 1)} weeks of forecast; the ${p.recommended_program} target is ${fmtN(p.target_qty / p.avg_weekly, 1)} weeks because it assumes replenishment every ${p.calc.R} week${p.calc.R === 1 ? "" : "s"}${p.program_change ? " once the program change is live" : ""}. Today's supply plan has ${r.po_week ? `the open PO in week ${r.po_week}` : "no open PO"}${r.fc_ratio > 1.2 ? ` and a forecast ${fmtPct(r.fc_ratio - 1)} above history` : ""}, so stock runs out in week ${r.first_short_week}. The ${fmtM(p.excess_value)} excess is releasable only after replenishment runs at target; until then do not cancel: ${r.status === "Escalate" ? "expedite" : "place the PO"}.`
+      : `${fmtM(p.excess_value)} above target × tolerance: push out or cancel open orders`;
+    add(p, "excess", detail, W.excess + p.excess_value);
+  }
   return [...map.values()].sort((a, b) => b.weight - a.weight);
 }
 
@@ -104,7 +131,7 @@ export function renderPlanner({ rows, pipe, insights, fresh, result, filters, ta
     ${kpi("Data to fix", fmtN(fixes), "part master and lot records")}
   </div>`;
   const mineCrit = X ? X.open.filter((x) => x.owner === "Planner" && x.sev === 0).length : 0;
-  const tabs = [["actions", "This week"], ["exceptions", `Exceptions${mineCrit ? ` <span class="pill">${mineCrit}</span>` : ""}`], ["escalations", "Escalations"], ["forecast", "Forecast flags"], ["fixes", "Data fixes"]];
+  const tabs = [["actions", "This week"], ["exceptions", `Exceptions${mineCrit ? ` <span class="pill" title="Critical open exceptions the planner owns">${mineCrit}</span>` : ""}`], ["escalations", "Escalations"], ["forecast", "Forecast flags"], ["fixes", "Data fixes"]];
   const tabBar = `<div class="tabs" role="tablist" aria-label="Planner">${tabs.map(([k, l]) => `<button role="tab" class="tab" data-ptab="${k}" aria-selected="${tab === k}" tabindex="${tab === k ? 0 : -1}">${l}</button>`).join("")}</div>`;
   let body = "";
   if (tab === "actions") {
@@ -152,7 +179,7 @@ export function renderPlanner({ rows, pipe, insights, fresh, result, filters, ta
       </tbody></table></div>`;
   }
   return `<div class="card planner-card">
-      <div class="card-head"><h2>Planner</h2><span class="hint">What to do this week, part by part. Policy is set by the manager; this layer only shows the actions it creates. Click a part for its numbers.</span></div>
+      <div class="card-head"><h2>Planner</h2><span class="hint">What to do this week, part by part. Policy is set by the manager; this layer only shows the actions it creates. Click a part for its numbers. Counts: This week has one row per part with its actions merged; Exceptions has one item per rule broken, so a part can appear there more than once.</span></div>
       ${kpis}${tabBar}<div class="tabpanel">${body}</div></div>`;
 }
 
@@ -197,7 +224,7 @@ export function renderPipelineTab(pipe, P) {
       <label class="btn"><input type="file" accept=".csv,text/csv" data-v2="forecast" hidden>Upload forecast CSV</label>
       <button class="btn" type="button" data-export="escalations">Export escalation list</button></div>
     <div class="kpis fresh-kpis">
-      ${kpi("Escalate", `${pipe.escalate.length} · ${fmtM(pipe.escalateValue)}`, `top 10 parts carry ${fmtPct(pipe.top10Share)} of the value`, "claim")}
+      ${kpi("Escalate", `${pipe.escalate.length} · ${fmtM(pipe.escalateValue)}`, `top 3 parts carry ${fmtPct(pipe.top3Share)} of the value`, "claim")}
       ${kpi("Place PO", `${pipe.watch.length} · ${fmtM(pipe.watchValue)}`, "short after the lead time", "aging")}
       ${kpi("Covered 13 weeks", fmtN(pipe.covered.length), `${pipe.noLeadTime.length} without lead time`)}
       ${kpi("Forecast vs history", `${pipe.upside.length} up · ${pipe.downside.length} down`, `> ${P.fc_upside}× or < ${P.fc_downside}× the last ${P.fc_hist_weeks} weeks`)}
@@ -308,9 +335,10 @@ export function renderInbox(X, filters, { STATUSES, SEVERITIES, CATEGORIES, reso
     ${shown.length > rows.length ? `<p class="hint">Showing ${rows.length} of ${shown.length}. <button type="button" class="btn btn-ghost" data-xall>Show all</button></p>` : ""}`;
 }
 
-const sevKpis = (X, list) => {
+const sevKpis = (X, list, totalLabel = "") => {
   const c = (i) => list.filter((x) => x.sev === i).length;
   return `${kpi("Critical", fmtN(c(0)), "act today: supply hit now, or inside the lead time and large", c(0) ? "claim" : "")}
+    ${totalLabel ? kpi("Open exceptions", fmtN(list.length), totalLabel) : ""}
     ${kpi("High", fmtN(c(1)), "inside the lead time, or large impact", c(1) ? "aging" : "")}
     ${kpi("Medium · Low", `${c(2)} · ${c(3)}`, "impact later, or no money attached")}
     ${kpi("Past SLA", fmtN(list.filter((x) => x.pastSla).length), "escalated one level up", list.some((x) => x.pastSla) ? "claim" : "")}`;
@@ -321,7 +349,7 @@ export function renderExceptionsTab(X, filters, lib, P, eventsLabel) {
   return `<div class="fresh-src"><span class="muted">One queue for everything that broke a rule. Detected from the data already loaded, plus supply events (${esc(eventsLabel || "none loaded")}: ${ev.valid} valid${ev.invalid.length ? `, ${ev.invalid.length} invalid` : ""}${ev.belowThreshold.length ? `, ${ev.belowThreshold.length} below threshold` : ""}). Thresholds and SLAs in Policy → Exceptions. Status is kept for this session only.</span>
       <label class="btn"><input type="file" accept=".csv,text/csv" data-v2="events" hidden>Upload events CSV</label>
       <button class="btn" type="button" data-export="exceptions">Export inbox CSV</button></div>
-    <div class="kpis fresh-kpis">${sevKpis(X, X.open)}</div>
+    <div class="kpis fresh-kpis">${sevKpis(X, X.open, `all owners: ${X.open.filter((x) => x.owner === "Planner").length} planner, ${X.open.filter((x) => x.owner === "Manager").length} manager`)}</div>
     <h3>Impact of open exceptions</h3>
     <p class="hint">Each kind is different money, so they are listed side by side and never added: ${X.byKind.filter((k) => k.n).map((k) => `<b>${esc(k.kind)}</b> ${fmtM(k.value)} (${k.n})`).join(" · ")}.</p>
     <h3>Inbox</h3>
@@ -347,7 +375,7 @@ export function renderExceptionsTab(X, filters, lib, P, eventsLabel) {
 export function renderPlannerExceptions(X, filters, lib) {
   const mine = X.open.filter((x) => x.owner === "Planner");
   const up = X.open.filter((x) => x.owner === "Manager");
-  return `<p class="hint">Exceptions the planner owns, with an SLA by severity. Past the SLA they go to the manager; past twice the SLA, to the director. ${plural(up.length, "decision")} (EOL, allocation, tariffs, price, lead time, suppliers) sit with the manager and are not shown here.</p>
+  return `<p class="hint">The planner owns <b>${mine.length}</b> of the <b>${X.open.length}</b> open exceptions; the manager's Exceptions tab and the executive view count all ${X.open.length}. The other ${plural(up.length, "decision")} (EOL, allocation, tariffs, price, lead time, suppliers, E&amp;O) sit with the manager and are not shown here. SLA by severity: past it, an item goes to the manager; past twice the SLA, to the director.</p>
     <div class="kpis fresh-kpis">${sevKpis(X, mine)}</div>
     ${renderInbox(X, filters, lib, "Planner")}`;
 }
@@ -357,7 +385,7 @@ export function renderExecExceptions(X) {
   return `<article class="card story-card wide">
     <div class="story-card-head"><div class="eyebrow">Exceptions</div></div>
     <h2 class="headline">${X.counts.Critical} critical exceptions open; ${plural(X.executive.length, "item needs", "items need")} a director: past SLA or a critical decision</h2>
-    <p class="hint">Planners and the manager work the rest. Each kind of impact is different money and is not added up.</p>
+    <p class="hint">Counts cover all ${X.open.length} open exceptions, the same queue as the manager's Exceptions tab (${X.open.filter((x) => x.owner === "Planner").length} owned by planners, ${X.open.filter((x) => x.owner === "Manager").length} by the manager); the Planner layer shows only its own. Each kind of impact is different money and is not added up.</p>
     <div class="table-wrap story-table"><table class="grid"><thead><tr><th>Category</th><th class="n">Open</th><th class="n">Critical</th><th class="n">Past SLA</th><th>Impact</th></tr></thead><tbody>
       ${X.byCat.filter((c) => c.n).map((c) => `<tr><td>${esc(c.cat)}</td><td class="n">${c.n}</td><td class="n">${c.critical || dash}</td><td class="n">${c.pastSla ? `<span class="issue-block">${c.pastSla}</span>` : dash}</td>
         <td class="small">${c.kinds.map((k) => `${esc(k.kind)} <b>${fmtM(k.value)}</b>`).join(" · ") || dash}</td></tr>`).join("")}

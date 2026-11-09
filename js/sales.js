@@ -1,4 +1,4 @@
-// Sales view: the same parts, seen from the supplier's side of the table.
+// Supplier impact view: the same parts, seen from the supplier's side of the table.
 // The plant's consumption is each supplier's sell-through; the plant's on-hand stock is
 // inventory sitting at the customer. When the plant moves to its target stock, sell-in
 // (what suppliers ship) differs from sell-through by exactly that change in stock:
