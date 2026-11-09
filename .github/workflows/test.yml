@@ -28,3 +28,7 @@ jobs:
         run: node test/v2.mjs
       - name: Exceptions inbox (docs/specs/V3_SPEC.md)
         run: node test/exceptions.mjs
+      - name: EN/ES dictionaries (key and placeholder parity, engine sentence coverage)
+        run: node test/i18n.mjs
+      - name: Browser (CSP, untrusted input, malformed files, 5,000 parts, Spanish at 390 px, deck)
+        run: node test/browser.mjs

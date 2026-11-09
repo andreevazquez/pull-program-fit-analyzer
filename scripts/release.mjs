@@ -19,7 +19,8 @@ for (const t of readdirSync(join(root, "test")).filter((f) => f.endsWith(".mjs")
   }
 }
 
-const files = ["index.html", ...readdirSync(join(root, "js")).map((f) => `js/${f}`), ...readdirSync(join(root, "test")).map((f) => `test/${f}`)];
+const list = (dir) => readdirSync(join(root, dir), { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? list(`${dir}/${d.name}`) : [`${dir}/${d.name}`]));
+const files = ["index.html", ...list("js"), ...list("test")].filter((f) => /\.(html|js|mjs)$/.test(f));
 const versions = files.flatMap((f) => [...readFileSync(join(root, f), "utf8").matchAll(/\?v=(\d+)"/g)].map((m) => +m[1]));
 const next = Math.max(0, ...versions) + 1;
 let touched = 0;
