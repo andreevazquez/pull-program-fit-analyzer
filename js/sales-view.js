@@ -1,8 +1,8 @@
 // Supplier impact view: the same parts from the supplier's side. Charts only, one takeaway each,
 // headlines computed from sellIn() so they follow the Policy panel live.
-import { theme, legend, axisCat, axisVal, money, opts } from "./story.js?v=19";
-import { esc, fmtM, fmtPct, fmtN, plain } from "./format.js?v=19";
-import { t as tr } from "./i18n.js?v=19";
+import { theme, legend, axisCat, axisVal, money, opts } from "./story.js?v=23";
+import { esc, fmtM, fmtPct, fmtN, plain } from "./format.js?v=23";
+import { t as tr } from "./i18n.js?v=23";
 
 const charts = new Map();
 const pct = fmtPct;
@@ -65,7 +65,7 @@ export function renderSales(container, result, P, X, ctx = {}) {
     </div>
     <div class="story-hero">
       ${hero(tr("sv.hThrough"), `${fmtM(T.through_week)}<span class="unit">${tr("unit.perWk")}</span>`, tr("sv.hThroughSub", { v: fmtM(T.through_annual) }))}
-      ${hero(tr("sv.hStock"), `${wk(T.cover_now)}<span class="arrow">→</span>${wk(T.cover_target)}<span class="unit">${tr("unit.wks")}</span>`, tr("sv.hStockSub", { now: fmtM(T.inv_now), tgt: fmtM(T.inv_target) }))}
+      ${hero(tr("sv.hStock"), `${wk(T.cover_now)}<span class="arrow">→</span><wbr>${wk(T.cover_target)}<span class="unit">${tr("unit.wks")}</span>`, tr("sv.hStockSub", { now: fmtM(T.inv_now), tgt: fmtM(T.inv_target) }))}
       ${hero(tr("sv.hSellIn", { n: firstD }), `${less ? "−" : "+"}${pct(Math.abs(T.dip_window_pct))}`, tr(less ? "sv.hSellInLess" : "sv.hSellInMore", { v: fmtM(Math.abs(T.dip_window)) }), "dip")}
       ${hero(tr("sv.hBack"), T.recover_week <= H ? tr("sv.weekCap", { w: T.recover_week }) : tr("sv.overWks", { w: H }), tr("sv.hBackSub"))}
       ${hero(tr("kpi.consign"), P.consignment ? fmtM(T.consignment) : tr("common.off"), tr("sv.hConsignSub"), "consign")}

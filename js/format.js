@@ -19,7 +19,7 @@ const nf = (lang, d) => {
 // Formatters for one language. Compact money: en $4.74M, $568k, $5.3k, $812; es $4.74 M, $568 k (CLDR es-MX).
 export function fmtFor(lang) {
   const N = (v, d = 0) => (Number.isFinite(v) ? nf(lang, d).format(v) : "—");
-  const sp = lang === "es" ? " " : "";
+  const sp = lang === "es" ? "\u00a0" : ""; // non-breaking: "$4.74 M" never splits across lines
   return {
     N,
     USD: (v, d = 0) => (Number.isFinite(v) ? (v < 0 ? "−$" : "$") + N(Math.abs(v), d) : "—"),

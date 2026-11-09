@@ -1,17 +1,17 @@
 // Role layers. Executive: the portfolio in money, service and plan. Planner: what to do this week,
 // part by part. Also the Manager tabs added in v2 (pipeline coverage, supplier scorecard, MOQ & LT).
 // Render functions return HTML strings; js/app.js wires events. No computation beyond presentation.
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=19";
-import { VALUE_TYPES } from "./v2.js?v=19";
-import { t, tv, tx, getLang } from "./i18n.js?v=19";
-import { badge, blockedBadge, paged } from "./ui.js?v=19";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=23";
+import { VALUE_TYPES } from "./v2.js?v=23";
+import { t, tv, tx, getLang } from "./i18n.js?v=23";
+import { badge, blockedBadge, paged } from "./ui.js?v=23";
 
 const money = (v) => (Number.isFinite(v) ? fmtUSD(v) : `<span class="muted" title="${t("common.noCost")}">—</span>`);
 const dash = `<span class="muted">—</span>`;
 const yn = (b) => (b ? t("common.yes") : `<span class="issue-warn">${t("common.no")}</span>`);
 const hero = (label, value, sub, cls = "") => `<div class="hero ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
 const kpi = (label, value, sub, cls = "") => `<div class="kpi ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
-const arrow = `<span class="arrow">→</span>`;
+const arrow = `<span class="arrow">→</span><wbr>`;
 const TYPE_CLS = { "Cash, one-time": "t-cash", "P&L, per year": "t-pl", Recovery: "t-rec", "Ownership transfer": "t-own", "Risk to manage": "t-risk" };
 const th = (k, n, vars) => `<th${n ? ' class="n"' : ""}>${t(k, vars)}</th>`;
 

@@ -1,16 +1,16 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=19";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=19";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=19";
-import { exportDeck, canvasPng } from "./deck.js?v=19";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost, fmtCompact, fmtDate } from "./format.js?v=19";
-import { sellIn } from "./sales.js?v=19";
-import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=19";
-import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=19";
-import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=19";
-import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=19";
-import { renderSales, destroySales } from "./sales-view.js?v=19";
-import { t, tv, tx, getLang, setLang, onLang, applyStatic } from "./i18n.js?v=19";
-import { pc, badge, blockedBadge, paged, rowLimits, PAGE } from "./ui.js?v=19";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=23";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=23";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=23";
+import { exportDeck, canvasPng } from "./deck.js?v=23";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost, fmtCompact, fmtDate } from "./format.js?v=23";
+import { sellIn } from "./sales.js?v=23";
+import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=23";
+import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=23";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=23";
+import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=23";
+import { renderSales, destroySales } from "./sales-view.js?v=23";
+import { t, tv, tx, getLang, setLang, onLang, applyStatic } from "./i18n.js?v=23";
+import { pc, badge, blockedBadge, paged, rowLimits, PAGE } from "./ui.js?v=23";
 
 /* ---------------- state ---------------- */
 const VIEW_HASH = { "#story": "story", "#exec": "story", "#sales": "sales", "#planner": "planner" };
@@ -229,12 +229,12 @@ function renderKPIs() {
   $("#kpis").innerHTML = [
     kpi(t("kpi.parts"), `${fmtN(S.analyzed)}<span class="arrow"> / ${fmtN(S.parts)}</span>`, t("kpi.partsSub", { b: fmtN(S.blocked), i: fmtN(S.with_issue) })),
     kpi(t("kpi.spend"), fmtM(S.annual_spend), t("kpi.spendSub", { n: S.super_a, p: fmtPct(P.super_a) })),
-    kpi(t("kpi.inv"), `${fmtM(S.inv_now)}<span class="arrow">→</span>${fmtM(S.inv_target)}`,
+    kpi(t("kpi.inv"), `${fmtM(S.inv_now)}<span class="arrow">→</span><wbr>${fmtM(S.inv_target)}`,
       `<span class="delta-down">${invDelta <= 0 ? "−" : "+"}${fmtPct(Math.abs(invDelta))}</span> ${t("kpi.invSub")}`),
     kpi(t("kpi.excess"), fmtM(S.excess), t("kpi.excessSub", { tol: fmtN(P.tolerance, 2), wc: fmtM(state.bridge.working_capital) }), "excess"),
     kpi(t("kpi.carry"), `${fmtM(state.insights.carrying.avoided)}<span class="arrow">${t("unit.perYr")}</span>`, t("kpi.carrySub", { r: fmtPct(P.carrying_rate) }), "excess"),
     kpi(t("kpi.consign"), P.consignment ? fmtM(S.consignment) : t("common.off"), P.consignment ? t("kpi.consignSub") : t("kpi.consignOff"), "consign"),
-    kpi(t("kpi.pull"), `${fmtPct(S.pull_share_now)}<span class="arrow">→</span>${fmtPct(S.pull_share_rec)}`, t("kpi.pullSub")),
+    kpi(t("kpi.pull"), `${fmtPct(S.pull_share_now)}<span class="arrow">→</span><wbr>${fmtPct(S.pull_share_rec)}`, t("kpi.pullSub")),
     kpi(t("kpi.changes"), `${fmtN(S.program_changes)}<span class="arrow"> / ${fmtN(S.analyzed)}</span>`, t("kpi.changesSub", { p: fmtPct(S.analyzed ? S.program_changes / S.analyzed : 0) })),
   ].join("");
 }
@@ -1274,11 +1274,14 @@ function stackTables() {
     if (tb.closest("[hidden]")) continue;
     const heads = [...tb.querySelectorAll("thead th")].map((th) => th.textContent.trim());
     const rows = [...tb.querySelectorAll("tbody tr")];
-    const fits = heads.length >= 4 && rows.every((r) => r.cells.length === heads.length || r.cells.length === 1);
+    // A row fits if it has one cell per column, or is a group row (one cell, or colspans adding up to the width).
+    const span = (r) => [...r.cells].reduce((n, c) => n + c.colSpan, 0);
+    const full = (r) => r.cells.length === heads.length;
+    const fits = heads.length >= 4 && rows.every((r) => full(r) || r.cells.length === 1 || span(r) === heads.length);
     tb.classList.toggle("stacked", fits);
-    if (fits) for (const r of rows) [...r.cells].forEach((c, i) => { if (r.cells.length > 1 && c.dataset.label !== heads[i]) c.dataset.label = heads[i] || ""; });
+    if (fits) for (const r of rows) if (full(r)) [...r.cells].forEach((c, i) => { if (c.dataset.label !== heads[i]) c.dataset.label = heads[i] || ""; });
   }
 }
 let stackQueued = false;
 new MutationObserver(() => { if (!stackQueued) { stackQueued = true; requestAnimationFrame(() => { stackQueued = false; stackTables(); }); } })
-  .observe(document.body, { childList: true, subtree: true });
+  .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] }); // a table rendered while hidden is stacked once shown

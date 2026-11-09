@@ -10,12 +10,12 @@
 // Engine modules (segment, insights, v2, freshness, exceptions) build their English text with
 // tl("en", key, vars) and also keep { k, v } (msg()); the UI renders that message with tm() in the
 // current language. So tests and CSV exports stay English, and the screen follows the toggle.
-import en from "./i18n/en.js?v=19";
-import { fmtFor, setFormatLang } from "./format.js?v=19";
+import en from "./i18n/en.js?v=23";
+import { fmtFor, setFormatLang } from "./format.js?v=23";
 
 // English is always loaded (fallback, and the source of the engine templates); other languages load on demand.
 export const DICTS = { en };
-const LOADERS = { es: () => import("./i18n/es.js?v=19") };
+const LOADERS = { es: () => import("./i18n/es.js?v=23") };
 async function loadDict(l) { if (!DICTS[l] && LOADERS[l]) DICTS[l] = (await LOADERS[l]()).default; }
 export const LANGS = ["en", "es"];
 const STORE = "ppfa.lang";
@@ -143,7 +143,7 @@ export function tx(prefix, text) {
     out = s.replace(/\{(\w+)(?::(\w+))?\}/g, (_, k) => {
       let v = hit.vars[k] ?? "";
       if (NESTED[k]) v = v.split("; ").map((x) => tx(NESTED[k], x)).join("; ");
-      if (hit.fmts[k] === "money" && lang === "es") v = v.replace(/\$([\d.,]+)([Mk])/g, "$$$1 $2");
+      if (hit.fmts[k] === "money" && lang === "es") v = v.replace(/\$([\d.,]+)([Mk])/g, "$$$1\u00a0$2");
       return v;
     });
   }

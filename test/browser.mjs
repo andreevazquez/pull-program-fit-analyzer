@@ -270,6 +270,9 @@ try {
     const missing = r.text.match(/\b[a-z]+(\.[a-zA-Z0-9]+)+\b/g)?.filter((k) => /^(kpi|tab|policy|exec|planner|mgr|sales|story|drawer|exc|fresh|common|notice|guide|footer|header|deck|waves|risk|scen|integrity|pipe|score|opps|matrix|mig|parts|sup|reason|issue|action)\./.test(k)) || [];
     check(`${layer}: lang=es, no horizontal scroll (${r.w}px), no raw keys`, r.lang === "es" && r.w <= 390 && !missing.length, missing.slice(0, 3).join(", "));
     check(`${layer}: reads in Spanish`, /\b(de|los|las|para|por)\b/.test(r.text) && /Inventario|inventario|Proveedor|proveedor/.test(r.text));
+    // Linux and Android fonts run wider than macOS's: repeat the check with a wide font.
+    const wide = await evaluate(`(async () => { const s = document.createElement("style"); s.textContent = "*{font-family:Verdana,'DejaVu Sans',sans-serif!important}"; document.head.appendChild(s); await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); const w = document.documentElement.scrollWidth; s.remove(); return w; })()`);
+    check(`${layer}: no horizontal scroll with a wide font (${wide}px)`, wide <= 390);
   }
   check("no console errors in Spanish", errors.length === 0, errors.slice(0, 3).join(" | "));
   await send("Emulation.clearDeviceMetricsOverride");

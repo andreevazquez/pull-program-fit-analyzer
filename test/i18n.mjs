@@ -7,15 +7,15 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import en from "../js/i18n/en.js?v=19";
-import es from "../js/i18n/es.js?v=19";
-import { matchEngine, setLang, tx, tl, getLang } from "../js/i18n.js?v=19";
-import { analyze, clonePolicy } from "../js/segment.js?v=19";
-import { insights } from "../js/insights.js?v=19";
-import { freshness } from "../js/freshness.js?v=19";
-import { pipeline, scorecard, opportunities, valuePipeline } from "../js/v2.js?v=19";
-import { exceptions, EXC_TYPES, STATUSES, SEVERITIES, CATEGORIES, VALUE_KINDS, resolutionCodes } from "../js/exceptions.js?v=19";
-import { VALUE_TYPES } from "../js/v2.js?v=19";
+import en from "../js/i18n/en.js?v=23";
+import es from "../js/i18n/es.js?v=23";
+import { matchEngine, setLang, tx, tl, getLang } from "../js/i18n.js?v=23";
+import { analyze, clonePolicy } from "../js/segment.js?v=23";
+import { insights } from "../js/insights.js?v=23";
+import { freshness } from "../js/freshness.js?v=23";
+import { pipeline, scorecard, opportunities, valuePipeline } from "../js/v2.js?v=23";
+import { exceptions, EXC_TYPES, STATUSES, SEVERITIES, CATEGORIES, VALUE_KINDS, resolutionCodes } from "../js/exceptions.js?v=23";
+import { VALUE_TYPES } from "../js/v2.js?v=23";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -159,7 +159,7 @@ for (const [prefix, set] of seen) for (const s of set) {
 check("Spanish renders with no leftover placeholders", !leftovers.length, leftovers.slice(0, 5).join("\n       "));
 check("every matched engine sentence comes out in Spanish", !untranslated.length, untranslated.slice(0, 8).join("\n       "));
 check("nested lists translate (issues inside exception detail)", /Falta el lead time/.test(tx("exc.d.", "Missing lead time; Zero/blank cost (kept out of the analysis)")));
-check("compact money in Spanish gets a space ($1.20 M)", tx("exc.d.", "5.0% increase on $1.20M/yr of spend from 2026-12-01") === "5.0% de aumento sobre $1.20 M/año de gasto desde 2026-12-01");
+check("compact money in Spanish gets a space ($1.20 M)", tx("exc.d.", "5.0% increase on $1.20M/yr of spend from 2026-12-01") === "5.0% de aumento sobre $1.20\u00a0M/año de gasto desde 2026-12-01");
 check("plural picks the form (1 part vs 2 parts)", tl("es", "st.nParts", { n: 1 }) === "1 parte" && tl("es", "st.nParts", { n: 2 }) === "2 partes");
 check("es-MX numbers: comma thousands, dot decimals", tl("es", "common.showingOf", { shown: 1234, total: 5000.5 }).includes("1,234") && tl("es", "common.showingOf", { shown: 1, total: 5000 }).includes("5,000"));
 await setLang("en");

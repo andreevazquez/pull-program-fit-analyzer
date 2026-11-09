@@ -1,9 +1,9 @@
 // Story view: charts only, one takeaway per chart, for steering meetings.
 // Every headline is computed from the current result, so it follows the Policy panel.
-import { PROGRAMS } from "./segment.js?v=19";
-import { SCENARIO_ROWS } from "./insights.js?v=19";
-import { esc, fmtM, fmtPct, fmtN, plain } from "./format.js?v=19";
-import { t as tr, tx } from "./i18n.js?v=19";
+import { PROGRAMS } from "./segment.js?v=23";
+import { SCENARIO_ROWS } from "./insights.js?v=23";
+import { esc, fmtM, fmtPct, fmtN, plain } from "./format.js?v=23";
+import { t as tr, tx } from "./i18n.js?v=23";
 
 const charts = new Map();
 
@@ -167,8 +167,8 @@ export function renderStory(container, result, P, ins, ctx = {}) {
       </div>
     </div>
     <div class="story-hero">
-      ${hero(tr("st.hPull"), `${pct(S.pull_share_now)}<span class="arrow">→</span>${pct(S.pull_share_rec)}`, tr("story.todayVsRec"))}
-      ${hero(tr("story.inventory"), `${fmtM(S.inv_now)}<span class="arrow">→</span>${fmtM(S.inv_target)}`, tr("story.invSub", { d: `${sign(invDelta)}${pct(Math.abs(invDelta))}` }))}
+      ${hero(tr("st.hPull"), `${pct(S.pull_share_now)}<span class="arrow">→</span><wbr>${pct(S.pull_share_rec)}`, tr("story.todayVsRec"))}
+      ${hero(tr("story.inventory"), `${fmtM(S.inv_now)}<span class="arrow">→</span><wbr>${fmtM(S.inv_target)}`, tr("story.invSub", { d: `${sign(invDelta)}${pct(Math.abs(invDelta))}` }))}
       ${hero(tr("st.hExcess"), fmtM(S.excess), tr("story.excessSub", { tol, net: fmtM(S.inv_now - S.inv_target) }), "excess")}
       ${hero(tr("kpi.carry"), `${fmtM(C.avoided)}<span class="unit">${tr("unit.perYr")}</span>`, tr("st.hCarrySub", { r: pct(C.rate) }), "excess")}
       ${hero(tr("kpi.consign"), P.consignment ? fmtM(S.consignment) : tr("common.off"), tr("st.hConsignSub"), "consign")}

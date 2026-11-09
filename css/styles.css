@@ -374,7 +374,7 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
   .topbar { position: static; }
   .maker-role { display: block; margin: 2px 0; }
   .maker-role .sep, .maker-role + .sep { display: none; }
-  .hero .value { font-size: 20px; }
+  .hero .value { font-size: 20px; white-space: normal; }
   .story-card .headline { font-size: 16px; }
   .story-chart, .story-card.wide .story-chart { height: 240px; }
   #migration { overflow-x: auto; }
@@ -451,6 +451,8 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
   table.grid.stacked td > div { text-align: inherit; }
   table.grid.stacked tr.past-sla td:first-child { box-shadow: none; }
   table.grid.stacked tr.past-sla { box-shadow: inset 3px 0 0 var(--crit); }
+  table.grid.stacked tr.vp-type { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px 4px; }
+  table.grid.stacked tr.vp-type th { display: block; padding: 0; border: 0; background: none; }
 }
 
 /* Language toggle (EN | ES): same control as the layer toggle, compact, never the accent fill. */
