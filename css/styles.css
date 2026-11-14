@@ -474,3 +474,6 @@ html.loading main, html.loading .footer { visibility: hidden; animation: reveal 
 .whatif-controls { align-items: flex-end; }
 .whatif-controls label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--ink-2); }
 .whatif-headline { font-size: 15px; font-weight: 600; margin: 10px 0 4px; }
+.pr-text { white-space: pre-wrap; font-size: 13px; line-height: 1.5; padding: 12px 14px; margin: 10px 0; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); max-width: 90ch; }
+.pr-review { font-size: 12px; margin: 8px 0 0; color: var(--ink-2); }
+.pr-review.pr-draft { color: var(--ink); font-weight: 600; }

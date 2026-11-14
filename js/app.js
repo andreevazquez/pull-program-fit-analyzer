@@ -6,8 +6,9 @@ import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost, fmtCompact, fmtDate } from ".
 import { sellIn } from "./sales.js?v=24";
 import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=24";
 import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=24";
+import { proposalCandidates, proposal, PROPOSAL_COLUMNS, proposalRow } from "./proposal.js?v=24";
 import { delayCandidates, delayScenario, WHATIF_COLUMNS, whatifRow } from "./whatif.js?v=24";
-import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderWhatIf, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=24";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderWhatIf, renderProposal, proposalText, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=24";
 import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=24";
 import { renderSales, destroySales } from "./sales-view.js?v=24";
 import { t, tv, tx, getLang, setLang, onLang, applyStatic } from "./i18n.js?v=24";
@@ -31,6 +32,7 @@ const state = {
   events: [], eventsLabel: "", excStatus: new Map(), xfilters: emptyXFilters(), pxfilters: emptyXFilters(),
   sourceLabel: "", sample: false,
   whatif: { supplier: "", part: "", weeks: 2 }, wiCands: [], wi: null,
+  prSupplier: "", prStatus: new Map(),
 };
 function emptyXFilters() { return { search: "", status: "open", sev: "", cat: "", owner: "", supplier: "", all: false }; }
 const XLIB = { STATUSES: XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes };
@@ -180,7 +182,7 @@ function renderManager() {
 const TAB_RENDER = {
   parts: () => renderTable(),
   exceptions: () => renderExceptions(),
-  suppliers: () => { renderSuppliers(); $("#scorecard").innerHTML = renderScorecard(state.score, state.policy); },
+  suppliers: () => { renderSuppliers(); renderProposalBox(); $("#scorecard").innerHTML = renderScorecard(state.score, state.policy); },
   pipeline: () => { $("#tab-pipeline").innerHTML = renderPipelineTab(state.pipe, state.policy, `<section id="whatif" class="whatif">${whatifHtml()}</section>`); },
   opps: () => { $("#tab-opps").innerHTML = renderOppsTab(state.opps, state.policy); },
   waves: () => renderWaves(),
@@ -616,6 +618,41 @@ function drawPlanner() {
   if (active) refocus(el, `[data-pf="${active}"]`);
 }
 
+/* ---------------- VMI / CRP proposal draft ---------------- */
+function currentProposal() {
+  const c = proposalCandidates(state.result);
+  if (!c.length) return { c, X: null };
+  if (!c.some((x) => x.supplier === state.prSupplier)) state.prSupplier = c[0].supplier;
+  return { c, X: proposal(state.result, state.score, state.opps, state.policy, state.prSupplier) };
+}
+function renderProposalBox(focusSel) {
+  const { c, X } = currentProposal();
+  $("#proposal").innerHTML = renderProposal(c, X, state.policy, state.prStatus.get(state.prSupplier) || "Draft");
+  if (focusSel) $(focusSel)?.focus();
+}
+function bindProposal() {
+  const box = $("#proposal");
+  box.addEventListener("change", (e) => {
+    const k = e.target.dataset.pr;
+    if (k === "supplier") state.prSupplier = e.target.value;
+    if (k === "status") state.prStatus.set(state.prSupplier, e.target.value);
+    if (k) renderProposalBox(`#proposal [data-pr="${k}"]`);
+  });
+  box.addEventListener("click", (e) => {
+    const { X } = currentProposal();
+    if (!X) return;
+    const copy = e.target.closest("[data-pr-copy]");
+    if (copy) navigator.clipboard?.writeText(proposalText(X, state.policy)).then(() => { copy.textContent = t("fresh.copied"); }, () => { copy.textContent = t("fresh.selectToCopy"); });
+    if (e.target.closest('[data-export="proposal"]')) {
+      const slug = X.supplier.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      downloadCsv(`proposal_${slug}.csv`, PROPOSAL_COLUMNS, X.lines.map(proposalRow));
+    }
+    if (e.target.closest("a, button, select")) return;
+    const r = e.target.closest("[data-part]");
+    if (r) openDrawer(r.dataset.part);
+  });
+}
+
 /* ---------------- supplier delay what-if ---------------- */
 function computeWhatIf() {
   const c = state.wiCands, w = state.whatif;
@@ -637,7 +674,7 @@ function onWhatIf(e) {
 }
 function exportWhatIf() {
   if (!state.wi?.rows.length) return;
-  const slug = state.wi.supplier.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const slug = state.wi.supplier.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   downloadCsv(`whatif_${slug}_${state.wi.weeks}wk.csv`, WHATIF_COLUMNS, state.wi.rows.map(whatifRow));
 }
 
@@ -1282,6 +1319,7 @@ bind();
 bindDirector();
 bindFreshness();
 bindLayers();
+bindProposal();
 bindExceptions();
 bindKeyboard();
 setView(state.view);

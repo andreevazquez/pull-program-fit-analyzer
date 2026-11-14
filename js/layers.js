@@ -294,6 +294,62 @@ export function renderWhatIf(cands, W, sel) {
     </tbody></table></div>`;
 }
 
+/* ---------- VMI / CRP proposal draft (js/proposal.js) ---------- */
+// The proposal text in the screen's language; the CSV keeps English column names.
+export function proposalText(X, P) {
+  const ask = (a) => {
+    switch (a.code) {
+      case "vmi_agreement": return t("pr.aVmi", { n: a.n, v: fmtM(a.value) });
+      case "edi": return t("pr.aEdi");
+      case "consignment": return t("pr.aConsign", { v: fmtM(a.value) });
+      case "lead_time": return t("pr.aLt", { w: a.weeks, n: a.n, parts: a.parts.join(", ") });
+      case "otd": return t("pr.aOtd", { otd: fmtN(a.otd, 1), target: a.target });
+      case "hub": return t(a.expired ? "pr.aHubExpired" : "pr.aHub", { hub: a.hub, end: a.end });
+      default: return "";
+    }
+  };
+  const progs = [X.vmiN ? t("pr.nVmi", { n: X.vmiN, r: P.review.VMI }) : "", X.crpN ? t("pr.nCrp", { n: X.crpN, r: P.review.CRP }) : ""].filter(Boolean).join(t("pr.and"));
+  return [
+    t("pr.t1", { s: X.supplier }),
+    "",
+    t("pr.t2", { n: X.lines.length, v: fmtM(X.annual_spend), progs }),
+    t("pr.t3"),
+    ...(X.asks.length ? ["", t("pr.tAsks"), ...X.asks.map((a, i) => `${i + 1}. ${ask(a)}`)] : []),
+    "",
+    t("pr.t4"),
+  ].join("\n");
+}
+
+export function renderProposal(cands, X, P, status) {
+  if (!cands.length || !X) return `<h3>${t("pr.h")}</h3><p class="hint">${t("pr.none")}</p>`;
+  const opt = (v, label, on, dis) => `<option value="${esc(v)}"${on ? " selected" : ""}${dis ? " disabled" : ""}>${label}</option>`;
+  const statuses = ["Draft", "Reviewed", "Sent"];
+  return `<h3>${t("pr.h")}</h3>
+    <p class="hint">${t("pr.hint")}</p>
+    <div class="filters whatif-controls">
+      <label>${t("wi.supplier")} <select data-pr="supplier">${cands.map((c) => opt(c.supplier, `${esc(c.supplier)} · ${t("pr.supOpt", { n: c.n, v: fmtM(c.spend) })}`, c.supplier === X.supplier)).join("")}</select></label>
+      <label>${t("pr.status")} <select data-pr="status">${statuses.map((s) => opt(s, tv("pr.st", s), s === status, s === "Sent" && status === "Draft")).join("")}</select></label>
+      <button class="btn" type="button" data-pr-copy>${t("pr.copy")}</button>
+      <button class="btn" type="button" data-export="proposal">${t("pr.export")}</button>
+    </div>
+    <p class="pr-review ${status === "Draft" ? "pr-draft" : ""}">${t(`pr.review.${status}`)}</p>
+    <div class="kpis fresh-kpis">
+      ${kpi(t("pr.kParts"), `${X.lines.length}`, t("pr.kPartsSub", { v: X.vmiN, c: X.crpN, ch: X.changes }))}
+      ${kpi(t("pr.kSpend"), fmtM(X.annual_spend), t("pr.kSpendSub"))}
+      ${kpi(t("pr.kInv"), `${fmtM(X.inv_now)}${arrow}${fmtM(X.inv_target)}`, t("pr.kInvSub", { v: fmtM(X.above_max_value) }))}
+      ${kpi(t("kpi.consign"), X.consignment_value ? fmtM(X.consignment_value) : dash, t("pr.kConsignSub"), X.consignment_value ? "consign" : "")}
+    </div>
+    <div class="pr-text" tabindex="0" aria-label="${t("pr.textAria")}">${esc(proposalText(X, P))}</div>
+    <div class="table-wrap"><table class="grid"><thead><tr>${th("col.part_number")}${th("pr.cNow")}${th("pr.cProp")}${th("pr.cWeekly", 1)}${th("pr.cR", 1)}${th("pr.cMin", 1)}${th("pr.cMax", 1)}${th("pr.cOnHand", 1)}${th("pr.cConsign")}</tr></thead><tbody>
+    ${paged(X.lines, "proposal", (l) => `<tr class="clickable" tabindex="0" data-part="${esc(l.part.part_number)}"><td class="pn">${esc(l.part.part_number)}</td>
+      <td>${badge(l.part.current_program)}</td><td>${badge(l.program)}</td><td class="n">${fmtN(l.weekly)}</td><td class="n">${l.review_weeks}</td>
+      <td class="n">${fmtN(l.min_qty)}<div class="muted small">${t("pr.days", { d: fmtN(l.min_days, 1) })}</div></td>
+      <td class="n">${fmtN(l.max_qty)}<div class="muted small">${t("pr.days", { d: fmtN(l.max_days, 1) })}</div></td>
+      <td class="n">${fmtN(l.on_hand)}${l.above_max ? `<div class="issue-warn small">${t("pr.aboveMax", { q: fmtN(l.above_max) })}</div>` : ""}</td>
+      <td>${l.consignment ? t("common.yes") : dash}</td></tr>`, 9)}
+    </tbody></table></div>`;
+}
+
 export function renderScorecard(score, P) {
   return `<h3>${t("score.h")}</h3>
     <div class="kpis fresh-kpis">
