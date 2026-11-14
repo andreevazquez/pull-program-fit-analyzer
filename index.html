@@ -70,6 +70,7 @@
         <button type="button" data-view="planner" data-layer="planner" aria-pressed="false" title="Planner: what to do this week, part by part" data-i18n="layer.planner" data-i18n-attr="title:ix.plTitle">Planner</button>
       </div>
       <span class="source" id="source" data-i18n="ix.loading">Loading sample…</span>
+      <button class="ready-pill" id="readyPill" type="button" data-layers="analysis planner" aria-haspopup="dialog" hidden></button>
       <label class="btn" data-layers="analysis planner">
         <input type="file" id="upload" accept=".csv,text/csv" hidden>
         <span data-i18n="ix.upload">Upload CSV</span>
@@ -209,6 +210,7 @@
       <button class="btn btn-ghost icon" type="button" data-close aria-label="Close" data-i18n-attr="aria-label:ix.close">×</button>
     </div>
     <div class="guide-body">
+      <section id="readiness" class="readiness"></section>
       <ol class="guide-steps">
         <li data-i18n-html="ix.g1"><b>Download a template.</b> Start from the blank one, or from the 150-part sample to see real-looking data.</li>
         <li data-i18n-html="ix.g2"><b>Fill one row per purchased part</b> with 26 weeks of demand, oldest week first.</li>

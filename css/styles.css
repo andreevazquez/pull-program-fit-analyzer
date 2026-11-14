@@ -477,3 +477,13 @@ html.loading main, html.loading .footer { visibility: hidden; animation: reveal 
 .pr-text { white-space: pre-wrap; font-size: 13px; line-height: 1.5; padding: 12px 14px; margin: 10px 0; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); max-width: 90ch; }
 .pr-review { font-size: 12px; margin: 8px 0 0; color: var(--ink-2); }
 .pr-review.pr-draft { color: var(--ink); font-weight: 600; }
+
+/* ---------- data readiness (format dialog + header pill) ---------- */
+.readiness { margin-bottom: 16px; }
+.readiness h3 { margin-top: 0; }
+.ready { font-weight: 600; font-size: 12px; }
+.ready-ok { color: var(--good); }
+.ready-partial { color: var(--warn, #b26b00); }
+.ready-missing { color: var(--crit); }
+.ready-pill { font: inherit; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid currentColor; background: transparent; cursor: pointer; }
+.ready-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

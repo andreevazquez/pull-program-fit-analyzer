@@ -350,6 +350,23 @@ export function renderProposal(cands, X, P, status) {
     </tbody></table></div>`;
 }
 
+/* ---------- Data readiness (js/readiness.js) ---------- */
+const READY_CLS = { Ready: "ready-ok", Partial: "ready-partial", Missing: "ready-missing" };
+export function renderReadiness(R) {
+  const views = (list) => [...new Set(list)].map((v) => t(`ready.v.${v}`)).join(", ");
+  const summary = R.blockedViews.length
+    ? t("ready.sumBlocked", { r: R.ready, n: R.total, v: views(R.blockedViews) })
+    : R.partialViews.length ? t("ready.sumPartial", { r: R.ready, n: R.total, files: R.files.filter((f) => f.state === "Partial").map((f) => `<code>${esc(f.file)}</code>`).join(", ") }) : t("ready.sumOk", { n: R.total });
+  return `<h3>${t("ready.h")}</h3>
+    <p class="hint">${summary}</p>
+    <div class="table-wrap"><table class="grid ready-table"><thead><tr>${th("ready.cFile")}${th("ready.cState")}${th("ready.cRows", 1)}${th("ready.cMatch", 1)}${th("ready.cFeeds")}</tr></thead><tbody>
+    ${R.files.map((f) => `<tr><td><code>${esc(f.file)}</code>${f.label && f.label !== f.file ? `<div class="muted small">${esc(f.label)}</div>` : ""}${f.required ? `<div class="muted small">${t("ready.required")}</div>` : ""}</td>
+      <td><span class="ready ${READY_CLS[f.state]}">${tv("ready.st", f.state)}</span>${f.note ? `<div class="muted small">${t(`ready.n.${f.note.k}`, { n: f.note.n })}</div>` : ""}</td>
+      <td class="n">${fmtN(f.rows)}</td><td class="n">${f.of ? `${fmtN(f.matched)} / ${fmtN(f.of)}` : dash}</td>
+      <td>${f.feeds.map((v) => t(`ready.v.${v}`)).join(", ")}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
 export function renderScorecard(score, P) {
   return `<h3>${t("score.h")}</h3>
     <div class="kpis fresh-kpis">

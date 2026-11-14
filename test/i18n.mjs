@@ -19,6 +19,7 @@ import { VALUE_TYPES } from "../js/v2.js?v=24";
 import { parseCSV } from "./csv.mjs";
 import { IMPACTS } from "../js/whatif.js?v=24";
 import { PROPOSAL_STATUSES } from "../js/proposal.js?v=24";
+import { READY_STATES, FILES } from "../js/readiness.js?v=24";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 let failures = 0;
@@ -72,7 +73,7 @@ const dyn = [
   ...["Open", "Escalated", "Closed"].map((v) => `claimSt.${v}`),
   ...SEVERITIES.map((v) => `sev.${v}`), ...STATUSES.map((v) => `xst.${v}`), ...CATEGORIES.map((v) => `cat.${v}`),
   ...VALUE_KINDS.map((v) => `kind.${v}`), ...VALUE_TYPES.map((v) => `vtype.${v}`),
-  ...["Planner", "Manager", "Executive"].map((v) => `owner.${v}`), "holder.Plant", "holder.Supplier", ...IMPACTS.map((v) => `wi.imp.${v}`), ...PROPOSAL_STATUSES.flatMap((v) => [`pr.st.${v}`, `pr.review.${v}`]),
+  ...["Planner", "Manager", "Executive"].map((v) => `owner.${v}`), "holder.Plant", "holder.Supplier", ...IMPACTS.map((v) => `wi.imp.${v}`), ...PROPOSAL_STATUSES.flatMap((v) => [`pr.st.${v}`, `pr.review.${v}`]), ...READY_STATES.map((v) => `ready.st.${v}`), ...FILES.flatMap((f) => f.feeds.map((v) => `ready.v.${v}`)), ...["blocked", "noPo", "partsNoFc", "openPo", "supNotInMaster", "noOtd", "lotsUnknown", "eventsUnknown"].map((k) => `ready.n.${k}`),
   ...Object.values(EXC_TYPES).map((x) => `exc.t.${x.label}`), ...Object.values(EXC_TYPES).map((x) => `exc.a.${x.action}`),
   ...[...new Set(CATEGORIES.flatMap((c) => resolutionCodes(c)))].map((v) => `res.${v}`),
 ];

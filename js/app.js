@@ -6,9 +6,10 @@ import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost, fmtCompact, fmtDate } from ".
 import { sellIn } from "./sales.js?v=24";
 import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=24";
 import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=24";
+import { readiness } from "./readiness.js?v=24";
 import { proposalCandidates, proposal, PROPOSAL_COLUMNS, proposalRow } from "./proposal.js?v=24";
 import { delayCandidates, delayScenario, WHATIF_COLUMNS, whatifRow } from "./whatif.js?v=24";
-import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderWhatIf, renderProposal, proposalText, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=24";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderWhatIf, renderProposal, proposalText, renderReadiness, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=24";
 import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=24";
 import { renderSales, destroySales } from "./sales-view.js?v=24";
 import { t, tv, tx, getLang, setLang, onLang, applyStatic } from "./i18n.js?v=24";
@@ -142,6 +143,8 @@ function recompute() {
     state.fresh = freshness(state.lots, state.suppliersV2, state.result.parts, state.policy);
     const P = state.policy, cs = (c) => state.claimStatus.get(c.lot_id) || c.status;
     state.pipe = pipeline(state.result.parts, state.forecast, P);
+    state.ready = readiness({ result: state.result, forecast: state.forecast, suppliers: state.suppliersV2, lots: state.lots, events: state.events },
+      { parts: state.sourceLabel, forecast: state.forecastLabel, suppliers: state.suppliersLabel, lots: state.lotsLabel, events: state.eventsLabel });
     state.wiCands = delayCandidates(state.result.parts, state.forecast);
     state.wi = computeWhatIf();
     state.pipeByPart = new Map([...state.pipe.escalate, ...state.pipe.watch, ...state.pipe.covered, ...state.pipe.noLeadTime].map((r) => [r.part.part_number, r]));
@@ -196,7 +199,17 @@ function renderTab(tab) {
   stale.delete(tab);
   TAB_RENDER[tab]();
 }
+function renderReady() {
+  const R = state.ready, pill = $("#readyPill");
+  if (!R) { pill.hidden = true; return; }
+  pill.hidden = false;
+  pill.textContent = t("ready.pill", { r: R.ready, n: R.total });
+  pill.className = `ready-pill ${R.blockedViews.length ? "ready-missing" : R.partialViews.length ? "ready-partial" : "ready-ok"}`;
+  pill.title = t("ready.pillTitle");
+  $("#readiness").innerHTML = renderReadiness(R);
+}
 function renderCounts() {
+  renderReady();
   const X = state.exc;
   $("#excCount").textContent = X.counts.Critical || "";
   $("#escCount").textContent = state.pipe.escalate.length || "";
@@ -1032,6 +1045,7 @@ function bind() {
   $("#export").addEventListener("click", exportCSV);
   const guide = $("#guide");
   const openGuide = (e) => { e?.preventDefault(); guide.showModal(); };
+  $("#readyPill").addEventListener("click", openGuide);
   $("#formatHelp").addEventListener("click", openGuide);
   $("#notice").addEventListener("click", (e) => { if (e.target.closest("[data-guide]")) openGuide(e); });
   guide.addEventListener("click", (e) => { if (e.target === guide || e.target.closest("[data-close]")) guide.close(); });
