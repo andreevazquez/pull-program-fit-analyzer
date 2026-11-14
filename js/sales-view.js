@@ -1,8 +1,8 @@
 // Supplier impact view: the same parts from the supplier's side. Charts only, one takeaway each,
 // headlines computed from sellIn() so they follow the Policy panel live.
-import { theme, legend, axisCat, axisVal, money, opts } from "./story.js?v=24";
-import { esc, fmtM, fmtPct, fmtN, plain } from "./format.js?v=24";
-import { t as tr } from "./i18n.js?v=24";
+import { theme, legend, axisCat, axisVal, money, opts } from "./story.js?v=25";
+import { esc, fmtM, fmtPct, fmtN, plain } from "./format.js?v=25";
+import { t as tr } from "./i18n.js?v=25";
 
 const charts = new Map();
 const pct = fmtPct;

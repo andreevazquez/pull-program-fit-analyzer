@@ -3,10 +3,10 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { analyze, clonePolicy } from "../js/segment.js?v=24";
-import { freshness } from "../js/freshness.js?v=24";
-import { scorecard, opportunities } from "../js/v2.js?v=24";
-import { proposalCandidates, proposal, PROPOSAL_COLUMNS, proposalRow, ASKS } from "../js/proposal.js?v=24";
+import { analyze, clonePolicy } from "../js/segment.js?v=25";
+import { freshness } from "../js/freshness.js?v=25";
+import { scorecard, opportunities } from "../js/v2.js?v=25";
+import { proposalCandidates, proposal, PROPOSAL_COLUMNS, proposalRow, ASKS } from "../js/proposal.js?v=25";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");

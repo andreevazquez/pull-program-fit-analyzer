@@ -1,7 +1,7 @@
 // Supplier delay what-if: "this supplier's open POs slip N weeks: which parts go short inside their
 // lead time, how much value is at risk, what to do first". Re-runs pipeline() (js/v2.js) on the
 // affected parts with their open-PO due week pushed out. Pure functions, no DOM.
-import { pipeline } from "./v2.js?v=24";
+import { pipeline } from "./v2.js?v=25";
 
 const num = (v) => { const n = Number(String(v ?? "").replace(/[$,\s]/g, "")); return Number.isFinite(n) ? n : NaN; };
 const val = (r) => (r && Number.isFinite(r.short_value) ? r.short_value : 0);

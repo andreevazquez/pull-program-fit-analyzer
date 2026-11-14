@@ -1,10 +1,10 @@
 // Role layers. Executive: the portfolio in money, service and plan. Planner: what to do this week,
 // part by part. Also the Manager tabs added in v2 (pipeline coverage, supplier scorecard, MOQ & LT).
 // Render functions return HTML strings; js/app.js wires events. No computation beyond presentation.
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=24";
-import { VALUE_TYPES } from "./v2.js?v=24";
-import { t, tv, tx, getLang } from "./i18n.js?v=24";
-import { badge, blockedBadge, paged } from "./ui.js?v=24";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=25";
+import { VALUE_TYPES } from "./v2.js?v=25";
+import { t, tv, tx, getLang } from "./i18n.js?v=25";
+import { badge, blockedBadge, paged } from "./ui.js?v=25";
 
 const money = (v) => (Number.isFinite(v) ? fmtUSD(v) : `<span class="muted" title="${t("common.noCost")}">—</span>`);
 const dash = `<span class="muted">—</span>`;

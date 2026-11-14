@@ -248,3 +248,65 @@ DIO      = inventario ÷ (gasto anual / 365)
 ```
 
 El pipeline de valor subtotaliza cada tipo de valor por separado y nunca los suma en un solo número. Los tipos son efectivo de una sola vez, P&L por año, recuperación, transferencia de propiedad y riesgo.
+
+## 15. Simulación de retraso de proveedor
+
+Código: `js/whatif.js` `delayScenario()`. Se muestra en Gerente → Pipeline.
+
+- Aplica a las partes del proveedor elegido (o a una parte) que tienen una PO abierta con entrega dentro de las 13 semanas.
+- La semana de entrega de la PO se recorre según el retraso. Una PO que pasa de la semana 13 sale del horizonte.
+- `pipeline()` (sección 10) se vuelve a correr sobre esas partes, antes y después del retraso.
+
+| Impacto | Regla | Acción |
+|---|---|---|
+| Expeditar (nuevo) | Escalar después, no antes | Expeditar o buscar segunda fuente (las MLCC ligan al MLCC Alternate Finder) |
+| Faltante mayor | Escalar antes y después, con mayor valor de faltante | Expeditar o buscar segunda fuente |
+| Ordenar antes | Cubierta antes, Vigilar después | Colocar PO a más tardar en la semana indicada |
+| Menos cobertura | Vigilar antes y después, con la primera semana corta antes | Vigilar |
+| Sin cambio | en otro caso | |
+
+Valor adicional en riesgo = Σ max(0, valor del faltante después − antes). El valor del faltante es el peor faltante dentro del lead time × costo unitario, como en la sección 10.
+
+## 16. Borrador de propuesta VMI / CRP
+
+Código: `js/proposal.js` `proposal()`. Se muestra en Gerente → Proveedores.
+
+Líneas: las partes del proveedor recomendadas para VMI o CRP. Para cada una:
+
+```
+min = safety stock                                   (sección 6)
+max = max(safety stock + max(avg × R, MOQ), target)  un ciclo de revisión completo o el MOQ arriba del min
+```
+
+Lo que se le pide al proveedor sale del scorecard (la sección 11 para el lead time):
+
+| Petición | Cuándo |
+|---|---|
+| Acuerdo VMI | hay partes VMI y no hay `vmi_agreement` |
+| EDI | el proveedor no tiene `edi_enabled` |
+| Consignación | hay partes VMI y la consignación está encendida |
+| Reducción de lead time | partes en la lista de oportunidades de LT donde el colchón lo carga el proveedor |
+| Plan de OTD | `otd_pct` abajo de `exc_otd_min` (90%) |
+| Renovación del hub | contrato del hub que vence dentro de `hub_warn_months` |
+
+La propuesta es un borrador. Su estatus (Borrador → Revisado → Enviado) vive solo en la sesión, y para marcarla Enviado primero hay que marcarla Revisado.
+
+## 17. Revisión de datos y encabezados
+
+**Revisión** (`js/readiness.js` `readiness()`)
+- Cada archivo queda **Listo** (todas sus filas coinciden con el archivo de partes), **Parcial** (algunas filas no se pueden usar) o **Falta**.
+- En el archivo de partes, Parcial significa que hay partes bloqueadas por datos.
+- Cada archivo lista las vistas que alimenta. Una vista aparece como no disponible cuando falta su archivo.
+
+**Encabezados** (`js/headers.js`)
+- La comparación ignora mayúsculas, espacios, guiones y puntos.
+- Los nombres comunes de exportación del ERP se leen como las columnas canónicas: Item → part_number, Vendor → supplier, Qty On Hand → on_hand_qty, Standard Cost → unit_cost_usd, Min Order Qty → moq, Week 1 → w01.
+- Un lead time en días se divide entre 7.
+- Si existe la columna canónica, siempre gana sobre el alias.
+
+## 18. Skill de Claude
+
+`claude-skill/pull-program-fit/` corre el mismo motor desde la línea de comandos. `scripts/engine/` es una copia de los módulos de `js/`, generada por `scripts/build-skill.mjs`. `test/skill.mjs` revisa que:
+- la copia esté al día;
+- la CLI reproduzca `reference/expected_results.csv`;
+- los encabezados estilo ERP den las mismas recomendaciones.

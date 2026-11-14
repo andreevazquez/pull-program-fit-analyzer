@@ -58,6 +58,24 @@ Cuando una parte está corta en el pipeline y en exceso al mismo tiempo, la lín
 
 ![Vista de Planeador: lista de acciones con los expeditados primero](docs/img/planner.png)
 
+## Simulación de retraso, borradores de propuesta y skill de Claude
+
+Cuatro funciones toman como referencia los flujos de [Claude for Manufacturing](https://claude.com/resources/articles/claude-for-manufacturing): borradores que terminan en la revisión de una persona, cifras que se pueden rastrear hasta el dato, y una revisión inicial que dice qué todavía no puede correr.
+
+- **Simulación de retraso de proveedor** (Gerente → Pipeline). Escoges un proveedor y un retraso: sus PO abiertas se recorren y la proyección de 13 semanas se recalcula. La vista muestra:
+  - qué partes quedan cortas dentro de su lead time, donde una PO nueva ya no llega;
+  - el valor adicional en riesgo y la primera semana corta;
+  - qué expeditar o con quién buscar segunda fuente, y qué hay que ordenar antes.
+  Con la muestra, Distribuidor Norte con cuatro semanas de retraso deja 39 partes cortas dentro de su lead time, con $317 k más en riesgo.
+- **Borrador de propuesta VMI/CRP** (Gerente → Proveedores). Para un proveedor, las partes que la política pasa a VMI o CRP, con:
+  - min (safety stock) y max (el min más un ciclo de revisión, o el MOQ) por parte;
+  - lo que hay que pedirle según el scorecard: acuerdo VMI, EDI, consignación, reducción de lead time, plan de OTD, renovación del hub.
+  El texto sale en EN/ES con la lista de partes en CSV. El estatus va de Borrador a Revisado a Enviado, y no se puede marcar Enviado sin haberlo marcado Revisado.
+- **Revisión de datos** (el botón Datos r/n y el diálogo de formato CSV). Por archivo: si está cargado, cuántas filas coinciden con el archivo de partes y qué vistas alimenta.
+- **Skill de Claude** ([descarga](https://andreevazquez.github.io/pull-program-fit-analyzer/downloads/pull-program-fit-skill.zip), código en [claude-skill/](claude-skill/pull-program-fit/SKILL.md)). El mismo motor como skill que Claude corre sobre una exportación del ERP: resultados, expeditados, simulación y propuesta en CSV, más un resumen que mantiene separados los tipos de valor. Lee tal cual los encabezados comunes de exportación (Item, Vendor, Qty On Hand, Standard Cost, Week 1…, lead time en días). Se sube a Claude como skill personalizada, en el mismo espacio de trabajo donde un equipo use Claude for Manufacturing o sus conectores de ERP.
+
+Son funciones independientes inspiradas en ese lanzamiento, no una integración oficial.
+
 ## Cómo funciona la política
 
 Reglas completas, fórmulas y ubicación en el código: **[docs/METHODOLOGY.es.md](docs/METHODOLOGY.es.md)**. Términos: **[docs/GLOSSARY.md](docs/GLOSSARY.md)**.

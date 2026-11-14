@@ -1,6 +1,6 @@
 // Small render helpers shared by js/app.js and js/layers.js.
-import { esc } from "./format.js?v=24";
-import { t } from "./i18n.js?v=24";
+import { esc } from "./format.js?v=25";
+import { t } from "./i18n.js?v=25";
 
 export const PVAR = { VMI: "--vmi", CRP: "--crp", Kanban: "--kanban", MRP: "--mrp" };
 export const pc = (prog) => `--c: var(${PVAR[prog] || "--mrp"})`;

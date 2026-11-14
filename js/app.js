@@ -1,20 +1,20 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=24";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=24";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=24";
-import { exportDeck, canvasPng } from "./deck.js?v=24";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost, fmtCompact, fmtDate } from "./format.js?v=24";
-import { sellIn } from "./sales.js?v=24";
-import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=24";
-import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=24";
-import { readiness } from "./readiness.js?v=24";
-import { normalizeHeader, canonicalRows } from "./headers.js?v=24";
-import { proposalCandidates, proposal, PROPOSAL_COLUMNS, proposalRow } from "./proposal.js?v=24";
-import { delayCandidates, delayScenario, WHATIF_COLUMNS, whatifRow } from "./whatif.js?v=24";
-import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderWhatIf, renderProposal, proposalText, renderReadiness, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=24";
-import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=24";
-import { renderSales, destroySales } from "./sales-view.js?v=24";
-import { t, tv, tx, getLang, setLang, onLang, applyStatic } from "./i18n.js?v=24";
-import { pc, badge, blockedBadge, paged, rowLimits, PAGE } from "./ui.js?v=24";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=25";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=25";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=25";
+import { exportDeck, canvasPng } from "./deck.js?v=25";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost, fmtCompact, fmtDate } from "./format.js?v=25";
+import { sellIn } from "./sales.js?v=25";
+import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=25";
+import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=25";
+import { readiness } from "./readiness.js?v=25";
+import { normalizeHeader, canonicalRows } from "./headers.js?v=25";
+import { proposalCandidates, proposal, PROPOSAL_COLUMNS, proposalRow } from "./proposal.js?v=25";
+import { delayCandidates, delayScenario, WHATIF_COLUMNS, whatifRow } from "./whatif.js?v=25";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderWhatIf, renderProposal, proposalText, renderReadiness, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=25";
+import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=25";
+import { renderSales, destroySales } from "./sales-view.js?v=25";
+import { t, tv, tx, getLang, setLang, onLang, applyStatic } from "./i18n.js?v=25";
+import { pc, badge, blockedBadge, paged, rowLimits, PAGE } from "./ui.js?v=25";
 
 /* ---------------- state ---------------- */
 const VIEW_HASH = { "#story": "story", "#exec": "story", "#sales": "sales", "#planner": "planner" };
