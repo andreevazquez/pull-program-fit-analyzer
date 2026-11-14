@@ -19,6 +19,8 @@ export function expectedFiles() {
   const out = ENGINE.map((m) => [`scripts/engine/${m}.js`, banner(`js/${m}.js`) + readFileSync(join(root, "js", `${m}.js`), "utf8").replace(/\?v=\d+"/g, '"')]);
   out.push(["scripts/engine/csv.js", banner("test/csv.mjs") + readFileSync(join(root, "test", "csv.mjs"), "utf8")]);
   out.push(["references/METHODOLOGY.md", readFileSync(join(root, "docs", "METHODOLOGY.md"), "utf8")]);
+  // ES modules on any Node from 18 (newer versions also detect it on their own).
+  out.push(["package.json", JSON.stringify({ name: "pull-program-fit-skill", private: true, type: "module", engines: { node: ">=18" } }, null, 2) + "\n"]);
   for (const f of ["sample_parts.csv", "forecast.csv", "suppliers.csv"]) out.push([`assets/${f}`, readFileSync(join(root, "data", f), "utf8")]);
   return out;
 }

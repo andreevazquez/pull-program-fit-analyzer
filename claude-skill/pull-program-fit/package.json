@@ -1,0 +1,8 @@
+{
+  "name": "pull-program-fit-skill",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  }
+}
