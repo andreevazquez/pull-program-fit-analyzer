@@ -7,16 +7,17 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import en from "../js/i18n/en.js?v=23";
-import es from "../js/i18n/es.js?v=23";
-import { matchEngine, setLang, tx, tl, getLang } from "../js/i18n.js?v=23";
-import { analyze, clonePolicy } from "../js/segment.js?v=23";
-import { insights } from "../js/insights.js?v=23";
-import { freshness } from "../js/freshness.js?v=23";
-import { pipeline, scorecard, opportunities, valuePipeline } from "../js/v2.js?v=23";
-import { exceptions, EXC_TYPES, STATUSES, SEVERITIES, CATEGORIES, VALUE_KINDS, resolutionCodes } from "../js/exceptions.js?v=23";
-import { VALUE_TYPES } from "../js/v2.js?v=23";
+import en from "../js/i18n/en.js?v=24";
+import es from "../js/i18n/es.js?v=24";
+import { matchEngine, setLang, tx, tl, getLang } from "../js/i18n.js?v=24";
+import { analyze, clonePolicy } from "../js/segment.js?v=24";
+import { insights } from "../js/insights.js?v=24";
+import { freshness } from "../js/freshness.js?v=24";
+import { pipeline, scorecard, opportunities, valuePipeline } from "../js/v2.js?v=24";
+import { exceptions, EXC_TYPES, STATUSES, SEVERITIES, CATEGORIES, VALUE_KINDS, resolutionCodes } from "../js/exceptions.js?v=24";
+import { VALUE_TYPES } from "../js/v2.js?v=24";
 import { parseCSV } from "./csv.mjs";
+import { IMPACTS } from "../js/whatif.js?v=24";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 let failures = 0;
@@ -70,7 +71,7 @@ const dyn = [
   ...["Open", "Escalated", "Closed"].map((v) => `claimSt.${v}`),
   ...SEVERITIES.map((v) => `sev.${v}`), ...STATUSES.map((v) => `xst.${v}`), ...CATEGORIES.map((v) => `cat.${v}`),
   ...VALUE_KINDS.map((v) => `kind.${v}`), ...VALUE_TYPES.map((v) => `vtype.${v}`),
-  ...["Planner", "Manager", "Executive"].map((v) => `owner.${v}`), "holder.Plant", "holder.Supplier",
+  ...["Planner", "Manager", "Executive"].map((v) => `owner.${v}`), "holder.Plant", "holder.Supplier", ...IMPACTS.map((v) => `wi.imp.${v}`),
   ...Object.values(EXC_TYPES).map((x) => `exc.t.${x.label}`), ...Object.values(EXC_TYPES).map((x) => `exc.a.${x.action}`),
   ...[...new Set(CATEGORIES.flatMap((c) => resolutionCodes(c)))].map((v) => `res.${v}`),
 ];

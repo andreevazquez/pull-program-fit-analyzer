@@ -1,10 +1,10 @@
 // Role layers. Executive: the portfolio in money, service and plan. Planner: what to do this week,
 // part by part. Also the Manager tabs added in v2 (pipeline coverage, supplier scorecard, MOQ & LT).
 // Render functions return HTML strings; js/app.js wires events. No computation beyond presentation.
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=23";
-import { VALUE_TYPES } from "./v2.js?v=23";
-import { t, tv, tx, getLang } from "./i18n.js?v=23";
-import { badge, blockedBadge, paged } from "./ui.js?v=23";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost } from "./format.js?v=24";
+import { VALUE_TYPES } from "./v2.js?v=24";
+import { t, tv, tx, getLang } from "./i18n.js?v=24";
+import { badge, blockedBadge, paged } from "./ui.js?v=24";
 
 const money = (v) => (Number.isFinite(v) ? fmtUSD(v) : `<span class="muted" title="${t("common.noCost")}">—</span>`);
 const dash = `<span class="muted">—</span>`;
@@ -222,7 +222,7 @@ function forecastTable(pipe, key = "fc") {
 }
 
 /* ================= Manager tabs (v2) ================= */
-export function renderPipelineTab(pipe, P) {
+export function renderPipelineTab(pipe, P, extra = "") {
   const bySup = new Map();
   for (const r of pipe.escalate) {
     const g = bySup.get(r.part.supplier) || { supplier: r.part.supplier, n: 0, value: 0 };
@@ -238,12 +238,60 @@ export function renderPipelineTab(pipe, P) {
       ${kpi(t("pipe.kCovered"), fmtN(pipe.covered.length), t("pipe.kCoveredSub", { n: pipe.noLeadTime.length }))}
       ${kpi(t("pipe.kFc"), t("common.upDown", { u: pipe.upside.length, d: pipe.downside.length }), t("pipe.kFcSub", { u: P.fc_upside, d: P.fc_downside, w: P.fc_hist_weeks }))}
     </div>
+    ${extra}
     <h3>${t("pipe.hBySup")}</h3>
     <p class="hint">${sup.map((g) => `${esc(g.supplier)} ${g.n} (${fmtM(g.value)})`).join(" · ") || t("common.none")}</p>
     <h3>${t("pipe.hList")}</h3>
     ${coverageTable(pipe.escalate.slice(0, 25), "Escalate", t("pipe.noEsc"), false, "pipeEsc")}
     ${pipe.escalate.length > 25 ? `<p class="hint">${t("pipe.top25", { n: pipe.escalate.length })}</p>` : ""}
     <h3>${t("pipe.kFc")}</h3>${forecastTable(pipe, "pipeFc")}`;
+}
+
+/* ---------- Supplier delay what-if (js/whatif.js) ---------- */
+const MLCC_FINDER = "https://andreevazquez.github.io/mlcc-alternate-finder/";
+const IMPACT_CLS = { "New expedite": "issue-block", "Deeper shortage": "issue-block", "Order now": "issue-warn", "Shorter cover": "issue-warn", "No change": "muted" };
+function whatifAction(r) {
+  if (r.impact === "New expedite" || r.impact === "Deeper shortage") {
+    const alt = /mlcc/i.test(r.part.commodity) ? ` · <a href="${MLCC_FINDER}" target="_blank" rel="noopener noreferrer">${t("wi.aAlt")}<span class="sr-only">${t("ix.newTab")}</span></a>` : "";
+    return `<b>${t("wi.aExpedite")}</b>${alt}`;
+  }
+  if (r.impact === "Order now") return t("wi.aOrder", { w: r.order_by_week });
+  if (r.impact === "Shorter cover") return t("wi.aWatch");
+  return dash;
+}
+const poWeek = (w) => (w > 13 ? t("wi.beyond") : t("wi.wk", { w }));
+const shortWk = (w) => (w == null ? dash : t("wi.wk", { w }));
+
+// cands: delayCandidates(); W: delayScenario() for the selected supplier (or null).
+export function renderWhatIf(cands, W, sel) {
+  if (!cands.length) return `<h3>${t("wi.h")}</h3><p class="hint">${t("wi.none")}</p>`;
+  const sup = cands.find((c) => c.supplier === sel.supplier) || cands[0];
+  const opt = (v, label, on) => `<option value="${esc(v)}"${on ? " selected" : ""}>${label}</option>`;
+  const headline = W.newExpedite + W.deeper
+    ? t("wi.headline", { s: esc(W.supplier), w: W.weeks, n: W.newExpedite + W.deeper, v: fmtM(W.addedValue), f: W.firstShortWeek })
+    : t("wi.headlineOk", { s: esc(W.supplier), w: W.weeks });
+  return `<h3>${t("wi.h")}</h3>
+    <p class="hint">${t("wi.hint")}</p>
+    <div class="filters whatif-controls">
+      <label>${t("wi.supplier")} <select data-wi="supplier">${cands.map((c) => opt(c.supplier, `${esc(c.supplier)} · ${t("wi.supOpt", { n: c.parts.length, v: fmtM(c.po_value) })}`, c === sup)).join("")}</select></label>
+      <label>${t("wi.part")} <select data-wi="part">${opt("", t("wi.allParts", { n: sup.parts.length }), !sel.part)}${sup.parts.map((p) => opt(p.part_number, esc(p.part_number), p.part_number === sel.part)).join("")}</select></label>
+      <label>${t("wi.weeks")} <select data-wi="weeks">${[1, 2, 3, 4, 6, 8].map((w) => opt(w, t("wi.wkLate", { n: w }), w === W.weeks)).join("")}</select></label>
+      <button class="btn" type="button" data-export="whatif">${t("wi.export")}</button>
+    </div>
+    <p class="whatif-headline">${headline}</p>
+    <div class="kpis fresh-kpis">
+      ${kpi(t("wi.kNew"), fmtN(W.newExpedite + W.deeper), t("wi.kNewSub", { d: W.deeper }), W.newExpedite + W.deeper ? "claim" : "")}
+      ${kpi(t("wi.kAdded"), fmtM(W.addedValue), t("wi.kAddedSub", { v: fmtM(W.valueAfter) }), W.addedValue ? "claim" : "")}
+      ${kpi(t("wi.kFirst"), W.firstShortWeek ? t("wi.wk", { w: W.firstShortWeek }) : dash, t("wi.kFirstSub"))}
+      ${kpi(t("wi.kOrder"), fmtN(W.orderNow + W.shorter), t("wi.kOrderSub", { n: W.unaffected }), W.orderNow ? "aging" : "")}
+    </div>
+    <div class="table-wrap"><table class="grid"><thead><tr>${th("col.part_number")}${th("col.commodity")}${th("wi.cImpact")}${th("wi.cPo", 1)}<th class="n">LT</th>${th("wi.cShort", 1)}${th("wi.cAdded", 1)}${th("wi.cAction")}</tr></thead><tbody>
+    ${paged(W.rows, "whatif", (r) => `<tr class="clickable" tabindex="0" data-part="${esc(r.part.part_number)}"><td class="pn">${esc(r.part.part_number)}</td><td>${esc(r.part.commodity)}</td>
+      <td><span class="${IMPACT_CLS[r.impact]}">${tv("wi.imp", r.impact)}</span></td>
+      <td class="n">${poWeek(r.po_week_before)} → ${poWeek(r.po_week_after)}</td><td class="n">${fmtN(r.part.lead_time_weeks)}</td>
+      <td class="n">${shortWk(r.first_short_before)} → ${shortWk(r.first_short_after)}</td>
+      <td class="n">${r.added_value ? `<b>${fmtUSD(r.added_value)}</b>` : dash}</td><td>${whatifAction(r)}</td></tr>`, 8)}
+    </tbody></table></div>`;
 }
 
 export function renderScorecard(score, P) {

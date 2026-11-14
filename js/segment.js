@@ -2,11 +2,11 @@
 // Port of reference/segment.py. If this file and the Python disagree, the Python wins.
 // Pure functions, no DOM and no dependencies, so the same module runs in the browser and in Node tests.
 
-import { INSIGHT_DEFAULTS } from "./insights.js?v=23";
-import { SALES_DEFAULTS } from "./sales.js?v=23";
-import { FRESHNESS_DEFAULTS } from "./freshness.js?v=23";
-import { V2_DEFAULTS } from "./v2.js?v=23";
-import { EXC_DEFAULTS } from "./exceptions.js?v=23";
+import { INSIGHT_DEFAULTS } from "./insights.js?v=24";
+import { SALES_DEFAULTS } from "./sales.js?v=24";
+import { FRESHNESS_DEFAULTS } from "./freshness.js?v=24";
+import { V2_DEFAULTS } from "./v2.js?v=24";
+import { EXC_DEFAULTS } from "./exceptions.js?v=24";
 
 export const PROGRAMS = ["VMI", "CRP", "Kanban", "MRP"];
 

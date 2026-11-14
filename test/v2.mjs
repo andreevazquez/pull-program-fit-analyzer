@@ -5,9 +5,9 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { analyze, clonePolicy } from "../js/segment.js";
-import { insights } from "../js/insights.js?v=23";
-import { freshness } from "../js/freshness.js?v=23";
-import { pipeline, projectCoverage, scorecard, opportunities, valuePipeline, executive, cashBridge, VALUE_TYPES } from "../js/v2.js?v=23";
+import { insights } from "../js/insights.js?v=24";
+import { freshness } from "../js/freshness.js?v=24";
+import { pipeline, projectCoverage, scorecard, opportunities, valuePipeline, executive, cashBridge, VALUE_TYPES } from "../js/v2.js?v=24";
 import { parseCSV } from "./csv.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");

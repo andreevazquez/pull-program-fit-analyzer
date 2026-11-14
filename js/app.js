@@ -1,16 +1,17 @@
-import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=23";
-import { renderStory, destroyStory, fmtMetric } from "./story.js?v=23";
-import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=23";
-import { exportDeck, canvasPng } from "./deck.js?v=23";
-import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost, fmtCompact, fmtDate } from "./format.js?v=23";
-import { sellIn } from "./sales.js?v=23";
-import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=23";
-import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=23";
-import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=23";
-import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=23";
-import { renderSales, destroySales } from "./sales-view.js?v=23";
-import { t, tv, tx, getLang, setLang, onLang, applyStatic } from "./i18n.js?v=23";
-import { pc, badge, blockedBadge, paged, rowLimits, PAGE } from "./ui.js?v=23";
+import { analyze, DEFAULT_POLICY, clonePolicy, PROGRAMS, RESULT_COLUMNS, resultRow } from "./segment.js?v=24";
+import { renderStory, destroyStory, fmtMetric } from "./story.js?v=24";
+import { insights, scenarioMetrics, SCENARIO_ROWS } from "./insights.js?v=24";
+import { exportDeck, canvasPng } from "./deck.js?v=24";
+import { esc, fmtN, fmtUSD, fmtM, fmtPct, fmtCost, fmtCompact, fmtDate } from "./format.js?v=24";
+import { sellIn } from "./sales.js?v=24";
+import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=24";
+import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=24";
+import { delayCandidates, delayScenario, WHATIF_COLUMNS, whatifRow } from "./whatif.js?v=24";
+import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderWhatIf, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=24";
+import { exceptions, STATUSES as XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes, EXCEPTION_COLUMNS, exceptionRow } from "./exceptions.js?v=24";
+import { renderSales, destroySales } from "./sales-view.js?v=24";
+import { t, tv, tx, getLang, setLang, onLang, applyStatic } from "./i18n.js?v=24";
+import { pc, badge, blockedBadge, paged, rowLimits, PAGE } from "./ui.js?v=24";
 
 /* ---------------- state ---------------- */
 const VIEW_HASH = { "#story": "story", "#exec": "story", "#sales": "sales", "#planner": "planner" };
@@ -29,6 +30,7 @@ const state = {
   forecast: [], forecastLabel: "", ptab: "actions", pfilters: { search: "", action: "", supplier: "" },
   events: [], eventsLabel: "", excStatus: new Map(), xfilters: emptyXFilters(), pxfilters: emptyXFilters(),
   sourceLabel: "", sample: false,
+  whatif: { supplier: "", part: "", weeks: 2 }, wiCands: [], wi: null,
 };
 function emptyXFilters() { return { search: "", status: "open", sev: "", cat: "", owner: "", supplier: "", all: false }; }
 const XLIB = { STATUSES: XSTATUSES, SEVERITIES, CATEGORIES, resolutionCodes };
@@ -138,6 +140,8 @@ function recompute() {
     state.fresh = freshness(state.lots, state.suppliersV2, state.result.parts, state.policy);
     const P = state.policy, cs = (c) => state.claimStatus.get(c.lot_id) || c.status;
     state.pipe = pipeline(state.result.parts, state.forecast, P);
+    state.wiCands = delayCandidates(state.result.parts, state.forecast);
+    state.wi = computeWhatIf();
     state.pipeByPart = new Map([...state.pipe.escalate, ...state.pipe.watch, ...state.pipe.covered, ...state.pipe.noLeadTime].map((r) => [r.part.part_number, r]));
     state.score = scorecard(state.result, state.suppliersV2, state.fresh, P, cs);
     state.opps = opportunities(state.result, P);
@@ -177,7 +181,7 @@ const TAB_RENDER = {
   parts: () => renderTable(),
   exceptions: () => renderExceptions(),
   suppliers: () => { renderSuppliers(); $("#scorecard").innerHTML = renderScorecard(state.score, state.policy); },
-  pipeline: () => { $("#tab-pipeline").innerHTML = renderPipelineTab(state.pipe, state.policy); },
+  pipeline: () => { $("#tab-pipeline").innerHTML = renderPipelineTab(state.pipe, state.policy, `<section id="whatif" class="whatif">${whatifHtml()}</section>`); },
   opps: () => { $("#tab-opps").innerHTML = renderOppsTab(state.opps, state.policy); },
   waves: () => renderWaves(),
   risk: () => renderRisk(),
@@ -612,6 +616,31 @@ function drawPlanner() {
   if (active) refocus(el, `[data-pf="${active}"]`);
 }
 
+/* ---------------- supplier delay what-if ---------------- */
+function computeWhatIf() {
+  const c = state.wiCands, w = state.whatif;
+  if (!c.length) return null;
+  const sup = c.find((x) => x.supplier === w.supplier) || c[0];
+  if (!sup.parts.some((p) => p.part_number === w.part)) w.part = "";
+  w.supplier = sup.supplier;
+  return delayScenario(state.result.parts, state.forecast, state.policy, w);
+}
+const whatifHtml = () => renderWhatIf(state.wiCands, state.wi, state.whatif);
+function onWhatIf(e) {
+  const k = e.target.dataset.wi;
+  if (!k) return;
+  state.whatif[k] = k === "weeks" ? Number(e.target.value) : e.target.value;
+  if (k === "supplier") state.whatif.part = "";
+  state.wi = computeWhatIf();
+  $("#whatif").innerHTML = whatifHtml();
+  $(`#whatif [data-wi="${k}"]`)?.focus();
+}
+function exportWhatIf() {
+  if (!state.wi?.rows.length) return;
+  const slug = state.wi.supplier.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  downloadCsv(`whatif_${slug}_${state.wi.weeks}wk.csv`, WHATIF_COLUMNS, state.wi.rows.map(whatifRow));
+}
+
 function exportEscalations() {
   const rows = [...state.pipe.escalate, ...state.pipe.watch];
   if (rows.length) downloadCsv("pipeline_escalations.csv", ESCALATION_COLUMNS, rows.map(escalationRow));
@@ -664,6 +693,7 @@ function bindLayers() {
     const sub = e.target.closest("[data-subview]");
     if (sub && sub.dataset.subview !== state.view) setView(sub.dataset.subview);
     if (e.target.closest('[data-export="escalations"]')) exportEscalations();
+    if (e.target.closest('[data-export="whatif"]')) exportWhatIf();
     const more = e.target.closest("[data-more]");
     if (more) {
       const k = more.dataset.more;
@@ -678,6 +708,7 @@ function bindLayers() {
     $(sel).addEventListener("change", (e) => {
       const kind = e.target.dataset.v2;
       if (kind && e.target.files) readUpload(e.target, (txt, name) => loadV2Text(kind, txt, name));
+      if (e.target.dataset.wi) onWhatIf(e);
     });
   }
   const pl = $("#planner");
@@ -1014,7 +1045,7 @@ function bind() {
     renderTable();
   });
   for (const sel of ["#partsTable tbody", "#integrityTable", "#tab-waves", "#tab-risk", "#tab-freshness", "#tab-pipeline", "#tab-opps", "#planner", "#tab-exceptions"]) {
-    $(sel).addEventListener("click", (e) => { const r = e.target.closest("[data-part]"); if (r) openDrawer(r.dataset.part); });
+    $(sel).addEventListener("click", (e) => { if (e.target.closest("a, button, select")) return; const r = e.target.closest("[data-part]"); if (r) openDrawer(r.dataset.part); });
   }
   $("#supplierTable").addEventListener("click", (e) => {
     const r = e.target.closest("[data-supplier]");

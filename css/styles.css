@@ -467,3 +467,10 @@ table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
    The animation reveals it anyway after 4 s if the script never runs. */
 html.loading main, html.loading .footer { visibility: hidden; animation: reveal 0s linear 4s forwards; }
 @keyframes reveal { to { visibility: visible; } }
+
+/* ---------- supplier delay what-if (Pipeline tab) ---------- */
+.whatif { margin: 18px 0 8px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.whatif h3 { margin-top: 0; }
+.whatif-controls { align-items: flex-end; }
+.whatif-controls label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--ink-2); }
+.whatif-headline { font-size: 15px; font-weight: 600; margin: 10px 0 4px; }
