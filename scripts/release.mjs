@@ -8,6 +8,9 @@ import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+// The Claude skill carries a copy of the engine: rebuild it so test/skill.mjs checks the current code.
+execFileSync(process.execPath, [join(root, "scripts", "build-skill.mjs")], { stdio: "inherit" });
+
 for (const t of readdirSync(join(root, "test")).filter((f) => f.endsWith(".mjs") && f !== "csv.mjs").sort()) {
   try {
     execFileSync(process.execPath, [join(root, "test", t)], { stdio: "pipe" });

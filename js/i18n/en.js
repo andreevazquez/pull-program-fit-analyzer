@@ -1235,4 +1235,7 @@ export default {
   "ready.v.freshness": "freshness claims",
   "ready.v.aging": "internal aging",
   "ready.v.supplyEvents": "supply event exceptions",
+  "notice.headers": "Columns read as: {cols}.",
+  "ix.skill": "Run it as a Claude skill (.zip)",
+  "ix.gSkill": "Claude skill (.zip)",
 };

@@ -28,6 +28,14 @@ jobs:
         run: node test/v2.mjs
       - name: Exceptions inbox (docs/specs/V3_SPEC.md)
         run: node test/exceptions.mjs
+      - name: Supplier delay what-if
+        run: node test/whatif.mjs
+      - name: VMI/CRP proposal drafts
+        run: node test/proposal.mjs
+      - name: Data readiness
+        run: node test/readiness.mjs
+      - name: Claude skill (engine copy in sync, CLI matches the reference, ERP headers)
+        run: node test/skill.mjs
       - name: EN/ES dictionaries (key and placeholder parity, engine sentence coverage)
         run: node test/i18n.mjs
       - name: Browser (CSP, untrusted input, malformed files, 5,000 parts, Spanish at 390 px, deck)

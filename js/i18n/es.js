@@ -1235,4 +1235,7 @@ export default {
   "ready.v.freshness": "reclamos de frescura",
   "ready.v.aging": "envejecimiento interno",
   "ready.v.supplyEvents": "excepciones por eventos de abasto",
+  "notice.headers": "Columnas leídas como: {cols}.",
+  "ix.skill": "Úsalo como skill de Claude (.zip)",
+  "ix.gSkill": "Skill de Claude (.zip)",
 };

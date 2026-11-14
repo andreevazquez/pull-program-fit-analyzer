@@ -7,6 +7,7 @@ import { sellIn } from "./sales.js?v=24";
 import { freshness, ANALYSIS_DATE, CLAIM_COLUMNS, claimRow } from "./freshness.js?v=24";
 import { pipeline, scorecard, opportunities, valuePipeline, executive, cashBridge, ESCALATION_COLUMNS, escalationRow } from "./v2.js?v=24";
 import { readiness } from "./readiness.js?v=24";
+import { normalizeHeader, canonicalRows } from "./headers.js?v=24";
 import { proposalCandidates, proposal, PROPOSAL_COLUMNS, proposalRow } from "./proposal.js?v=24";
 import { delayCandidates, delayScenario, WHATIF_COLUMNS, whatifRow } from "./whatif.js?v=24";
 import { renderExecTop, plannerActions, renderPlanner, renderPipelineTab, renderWhatIf, renderProposal, proposalText, renderReadiness, renderScorecard, renderOppsTab, drawerCoverage, renderExceptionsTab, drawerExceptions, claimTextFor } from "./layers.js?v=24";
@@ -48,8 +49,9 @@ const issuesText = (p) => p.issues.map((m) => tx("issue.", m)).join("; ");
 const REQUIRED = ["part_number", "unit_cost_usd", "lead_time_weeks", "moq", "current_program", "on_hand_qty"];
 
 function loadText(text, label) {
-  const parsed = Papa.parse(text, { header: true, skipEmptyLines: "greedy", transformHeader: (h) => h.trim().toLowerCase() });
-  const fields = parsed.meta.fields || [];
+  const parsed = Papa.parse(text, { header: true, skipEmptyLines: "greedy", transformHeader: normalizeHeader });
+  const canon = canonicalRows(parsed.data);
+  const fields = canon.rows.length ? Object.keys(canon.rows[0]) : (parsed.meta.fields || []);
   const missing = REQUIRED.filter((c) => !fields.includes(c));
   const weeks = fields.filter((c) => /^w\d+$/.test(c));
   if (missing.length || !weeks.length) {
@@ -57,7 +59,7 @@ function loadText(text, label) {
     showNotice(t("notice.missingCols", { file: esc(label), n: cols.length, cols: esc(cols.join(", ")) }) + ` <a href="#" data-guide>${t("notice.seeFormatTemplate")}</a>.`);
     return;
   }
-  const rows = parsed.data.filter((r) => String(r.part_number ?? "").trim() !== "");
+  const rows = canon.rows.filter((r) => String(r.part_number ?? "").trim() !== "");
   if (!rows.length) { showNotice(t("notice.noParts", { file: esc(label) })); return; }
   showNotice("");
   state.rows = rows;
@@ -71,6 +73,7 @@ function loadText(text, label) {
   buildFilterOptions();
   syncFilterInputs();
   state.justLoaded = state.sample ? null : label;
+  state.headerNote = [...canon.renamed.map(([a, b]) => `${a} → ${b}`), ...(canon.converted ? [`${canon.converted} ÷ 7 → lead_time_weeks`] : [])];
   recompute();
 }
 
@@ -163,7 +166,8 @@ const stale = new Set();
 function renderAll() {
   if (state.justLoaded) {
     const S = state.result.summary;
-    showNotice(t("notice.loaded", { file: esc(state.justLoaded), n: fmtN(S.parts), a: fmtN(S.analyzed) }) + (S.blocked ? t("notice.loadedBlocked", { n: fmtN(S.blocked) }) : "") + ". " + t("notice.staysHere"), "ok");
+    showNotice(t("notice.loaded", { file: esc(state.justLoaded), n: fmtN(S.parts), a: fmtN(S.analyzed) }) + (S.blocked ? t("notice.loadedBlocked", { n: fmtN(S.blocked) }) : "") + ". "
+      + (state.headerNote?.length ? t("notice.headers", { cols: esc(state.headerNote.join(", ")) }) + " " : "") + t("notice.staysHere"), "ok");
     state.justLoaded = null;
   }
   renderCounts();
